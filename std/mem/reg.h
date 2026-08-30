@@ -16,7 +16,7 @@ typedef struct {
 	union { \
 		Reg reg; \
 		struct { \
-			union{ uptr ptr; void * any; u8 * raw; }; \
+			union { uptr ptr; void * any; u8 * raw; }; \
 			u64 len; \
 		}; \
 	}
