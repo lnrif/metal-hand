@@ -146,11 +146,13 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 // |> ATTRIBUTES                                                                                    |
 // |================================================================================================|
 
-#define NORETURN   __attribute__((noreturn))
 #define MUST_USE   __attribute__((warn_unused_result))
 #define USED       __attribute__((used))
 #define NAKED      __attribute__((naked))
 #define ALIGNED(N) __attribute__((aligned(N)))
+
+#define NO_RETURN   __attribute__((noreturn))
+#define NO_BUILTIN(args...) __attribute__((no_builtin(args)))
 
 #define IMPORT __attribute__((dllimport))
 #define EXPORT __attribute__((dllexport))
