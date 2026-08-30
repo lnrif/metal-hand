@@ -1,0 +1,10 @@
+-I.
+-fno-builtin
+-Wall
+-Wextra
+-Wshadow
+-Wconversion
+-Wsign-conversion
+-Wno-unused-includes
+-fno-delete-null-pointer-checks
+
