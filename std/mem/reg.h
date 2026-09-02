@@ -25,39 +25,66 @@ typedef struct {
 // |> [Reg]: helpers                                                                                |
 
 #define REG(_ptr, _len) ((Reg){.ptr = (_ptr), .len = (_len)})
+#define REG_ARR(arr) REG((arr), sizeof(arr))
+#define REG_VEC(_ptr, _len) ((Reg){.any = (_ptr), .len = (_len) * sizeof(typeof(*(_ptr)))})
 
 #define REG_NIL REG(0, 0)
-#define REG_ARR(arr) REG((arr), sizeof(arr))
+#define REG_SLICE(_ptr, _len) ((Reg){.any = (_ptr), .len = (_len) * sizeof(typeof(*(_ptr)))})
 
-#define REG_BEG(reg) ((reg)->ptr)
-#define REG_END(reg) ((reg)->ptr + (reg)->len)
-#define REG_LEN(reg) ((reg)->len)
+// #define REG_BEG(reg) ((reg)->ptr)
+// #define REG_END(reg) ((reg)->ptr + (reg)->len)
+// #define REG_LEN(reg) ((reg)->len)
 
 // |================================================================================================|
-// |> [Reg]: call                                                                                   |
+// |> req                                                                                           |
+
+typedef enum: u8 { REG_DIR_DOWN, REG_DIR_UP } RegDir;
 
 typedef struct {
 	u64 len;
 	u32 align;
-	i8  dir;
-} RegArgs;
+	RegDir dir;
+} RegReq;
 
-#define REG_RESIZE(_len, _align, _dir...) \
-	((RegArgs){.len = (_len), .align = (_align), _dir})
+#define REG_REQ(_len, _align, _dir) ((RegReq){.len = (_len), .align = (_align), .dir = (_dir)})
+#define REG_REQ_VEC(T, len, dir) REG_REQ((len) * sizeof(T), alignof(T), dir)
+#define REG_REQ_FREE REG_REQ(0, 0, REG_DIR_UP)
 
-#define REG_FREE REG_RESIZE(0, 0, .dir = 0)
+// |================================================================================================|
+// |> call                                                                                          |
 
 typedef void * RegCtx;
-typedef Reg (*RegUpd)(RegCtx ctx, Reg prev, RegArgs args);
+typedef Reg (*RegApi)(RegCtx ctx, Reg reg, RegReq req);
 
-typedef struct { RegCtx ctx; RegUpd upd; } RegVT;
+// |================================================================================================|
+// |> man                                                                                           |
 
-#define REG_VT(_ctx, _upd) ((RegVT){.ctx = (_ctx), .upd = (_upd)})
-#define REG_VT_NIL REG_VT(0, 0)
+typedef struct { RegCtx ctx; RegApi api; } RegMan;
 
-static inline Reg reg_upd(RegVT vt, Reg prev, RegArgs args) {
-	return (vt.upd != 0) ? vt.upd(vt.ctx, prev, args) : REG_NIL;
-};
+#define REG_MAN(_ctx, _api) ((RegMan){.ctx = (_ctx), .api = (_api)})
+#define REG_MAN_NIL REG_MAN(0, 0)
+
+// |================================================================================================|
+// |> wrapper                                                                                       |
+
+typedef struct { Reg reg; RegReq req; } RegUpd;
+
+RegUpd reg_upd_arr_ex(
+	u64 item_size, u32 item_align,
+	void * items, u64 count, u64 new_count,
+	RegDir dir
+);
+
+#define REG_UPD_ARR(_ptr, _len, _new_len, _dir) \
+	reg_upd_arr_ex( \
+		sizeof(*(_ptr)), alignof(*(_ptr)), \
+		(_ptr), (_len), (_new_len), (_dir) \
+	)
+
+#define reg_upd_arr(_man, _ptr, _len, _new_len, _dir) \
+	reg_upd(_man, REG_UPD_ARR(_ptr, _len, _new_len, _dir))
+
+Reg reg_upd(RegMan man, RegUpd upd);
 
 #endif // !STD_MEM_REG_H
 
