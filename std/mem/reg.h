@@ -68,6 +68,7 @@ typedef struct { RegCtx ctx; RegApi api; } RegMan;
 // |> wrapper                                                                                       |
 
 typedef struct { Reg reg; RegReq req; } RegUpd;
+#define REG_UPD(_reg, _req) ((RegUpd){.reg = (_reg), .req = (_req)})
 
 RegUpd reg_upd_arr_ex(
 	u64 item_size, u32 item_align,
@@ -75,14 +76,20 @@ RegUpd reg_upd_arr_ex(
 	RegDir dir
 );
 
-#define REG_UPD_ARR(_ptr, _len, _new_len, _dir) \
+#define REG_UPD_ARR(ptr, len, new_len, dir) \
 	reg_upd_arr_ex( \
-		sizeof(*(_ptr)), alignof(*(_ptr)), \
-		(_ptr), (_len), (_new_len), (_dir) \
+		sizeof(*(ptr)), alignof(*(ptr)), \
+		(ptr), (len), (new_len), (dir) \
 	)
 
-#define reg_upd_arr(_man, _ptr, _len, _new_len, _dir) \
-	reg_upd(_man, REG_UPD_ARR(_ptr, _len, _new_len, _dir))
+#define reg_upd_arr(man, ptr, len, new_len, dir) \
+	reg_upd(man, REG_UPD_ARR(ptr, len, new_len, dir))
+
+#define reg_alloc(man, T, count) \
+	reg_upd(man, REG_UPD(REG_NIL, REG_REQ(sizeof(T) * (count), alignof(T), REG_DIR_UP)))
+
+#define reg_free(man, ptr, count) \
+	reg_upd(man, REG_UPD(REG_VEC(ptr, count), REG_REQ_FREE))
 
 Reg reg_upd(RegMan man, RegUpd upd);
 
