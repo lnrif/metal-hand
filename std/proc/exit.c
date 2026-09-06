@@ -5,7 +5,7 @@
 // |> LINUX                                                                                         |
 // |================================================================================================|
 
-#include "std/linux/exit.h"
+#include "linux/exit.h"
 
 NO_RETURN void proc_exit(u8 status) {
 	linux_proc_exit(status);

@@ -26,5 +26,5 @@ StrZ str_z_init(u8z const * ptr_z) {
 StrZ str_z_limit(u8z const * ptr_z, u64 limit) {
 	u8 const * at = memchr(ptr_z, limit, 0);
 	if (at == 0) at = ptr_z + limit;
-	return STR_Z(ptr_z, (u64)(ptr_z - at));
+	return STR_Z(ptr_z, (u64)(at - ptr_z));
 };
