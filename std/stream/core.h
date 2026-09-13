@@ -23,8 +23,6 @@ typedef struct { WindowsFd get; } Stream;
 	#error "not supported"
 #endif
 
-#include "std/str/str.h"
-
 b8 term_enable_utf8(void);
 
 Stream stream_input(void);

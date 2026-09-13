@@ -1,11 +1,11 @@
-#include "std/str/str.h"
+#include "std/str/core.h"
 #include "std/mem/core.h"
 
 // |================================================================================================|
 // |> [Str]: find                                                                                   |
 
 u8 * str_find_byte(Str s, u8 b) {
-	return memchr(s.ptr, s.len, b);
+	return memchr(s.raw, s.len, b);
 };
 
 // |================================================================================================|
@@ -13,7 +13,7 @@ u8 * str_find_byte(Str s, u8 b) {
 
 b8 str_eq(Str a, Str b) {
 	if (a.len != b.len) return false;
-	return memcmp(a.ptr, b.ptr, a.len) == 0;
+	return memcmp(a.raw, b.raw, a.len) == 0;
 };
 
 // |================================================================================================|

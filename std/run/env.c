@@ -1,5 +1,5 @@
 #include "std/run/env.h"
-#include "std/str/str.h"
+#include "std/str/core.h"
 
 #if defined(__linux__)
 // |================================================================================================|
@@ -22,9 +22,9 @@ static EnvArg env_parse(u8z const * str) {
 	StrZ       expr = STR_Z_NIL;
 
 	for (u64 eq = 0; eq < full.len; eq += 1) {
-		if (full.ptr[eq] != '=') continue;
-		name = (Str ){.ptr = &full.ptr[0],      .len = eq};
-		expr = (StrZ){.ptr = &full.ptr[eq + 1], .len = full.len - eq - 1};
+		if (full.raw[eq] != '=') continue;
+		name = (Str ){.raw = &full.raw[0],      .len = eq};
+		expr = (StrZ){.raw = &full.raw[eq + 1], .len = full.len - eq - 1};
 		break;
 	};
 

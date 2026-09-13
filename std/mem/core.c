@@ -1,4 +1,8 @@
 #include "std/mem/core.h"
+#include "std/core.h"
+
+// |================================================================================================|
+// |> LIBC BUILTINS                                                                                 |
 
 NO_BUILTIN("memset")
 void * memset(void * restrict dst, u8 byte, u64 len) {
@@ -49,5 +53,20 @@ i32 memcmp(void const * a, void const * b, u64 n) {
 		return x[i] < y[i] ? -1 : 1;
 	};
 	return 0;
+};
+
+// |================================================================================================|
+// |> ALIGN UP/DOWN                                                                                 |
+
+u64 mem_align_up(u64 value, u64 align) {
+	if (!ALIGN_IS_SANE(align)) return U64_MAX;
+	u64 result;
+	if (ADD_OVER(value, align - 1, &result)) return U64_MAX;
+	return result & ~(align - 1);
+};
+
+u64 mem_align_down(u64 value, u64 align) {
+	if (!ALIGN_IS_SANE(align)) return U64_MAX;
+	return value & ~(align - 1);
 };
 

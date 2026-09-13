@@ -23,7 +23,7 @@ i64 linux_write(LinuxFd handle, void const * ptr, u64 len) {
 };
 
 i64 linux_write_str(LinuxFd handle, Str s) {
-	return linux_write(handle, s.ptr, s.len);
+	return linux_write(handle, s.raw, s.len);
 };
 
 // |================================================================================================|

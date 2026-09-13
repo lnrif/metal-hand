@@ -1,4 +1,4 @@
-#include "std/stream/stream.h"
+#include "std/stream/core.h"
 
 #if defined(__linux__) && defined(__x86_64__)
 // |================================================================================================|
@@ -30,7 +30,7 @@ i64 stream_write(Stream const * stream, void const * ptr, u64 len) {
 };
 
 i64 stream_write_str(Stream const * stream, Str s) {
-	return stream_write(stream, s.ptr, s.len);
+	return stream_write(stream, s.raw, s.len);
 };
 
 i64 stream_write_vec(Stream const * stream, StreamVec const * ptr, u64 len) {

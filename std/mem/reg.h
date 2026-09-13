@@ -2,15 +2,20 @@
 #define STD_MEM_REG_H
 
 #include "std/core.h"
+#include <stdalign.h>
 
 // |================================================================================================|
 // |> REGION                                                                                        |
 // |================================================================================================|
 
+typedef enum: u64 { REG_C_OOM, REG_C_INVALID_ARGS } RegCode;
+
 typedef struct {
-	union { uptr ptr; void * any; u8 * raw; };
-	u64 len;
+	union { uptr ptr; void * any; u8 * raw; b64 is_valid; };
+	union { u64 len; RegCode code; };
 } Reg;
+
+// if (!reg.valid) return reg.code;
 
 #define REG_EMBED(reg, ptr, any, raw, len) \
 	union { \
@@ -20,6 +25,7 @@ typedef struct {
 			u64 len; \
 		}; \
 	}
+
 
 // |================================================================================================|
 // |> [Reg]: helpers                                                                                |
@@ -78,7 +84,7 @@ RegUpd reg_upd_arr_ex(
 
 #define REG_UPD_ARR(ptr, len, new_len, dir) \
 	reg_upd_arr_ex( \
-		sizeof(*(ptr)), alignof(*(ptr)), \
+		sizeof(*(ptr)), alignof(typeof(*(ptr))), \
 		(ptr), (len), (new_len), (dir) \
 	)
 

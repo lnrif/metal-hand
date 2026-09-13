@@ -8,19 +8,21 @@
 #include "std/core.h"
 
 typedef struct {
-	u8 const * ptr;
+	union { uptr ptr; void const * any; u8 const * raw; b64 is_valid; };
 	u64 len;
 } Str;
 
 typedef union {
 	Str str;
 	struct {
-		u8 * ptr;
+		union { uptr ptr; void * any; u8 * raw; b64 is_valid; };
 		u64 len;
 	};
 } StrMut;
 
-#define STR(_ptr, _len) ((Str){.ptr = (_ptr), .len = (_len)})
+typedef Str StrOpt;
+
+#define STR(_raw, _len) ((Str){.raw = (_raw), .len = (_len)})
 #define STR_NIL STR(0, 0)
 #define S(lit)  STR((u8*)(void*)(lit), sizeof(lit) - 1)
 
@@ -50,10 +52,7 @@ b8 str_eq(Str a, Str b);
 typedef union {
 	Str str;
 	struct {
-		union {
-			u8 const * ptr_z;
-			u8 const * ptr;
-		};
+		union { uptr ptr; void const * any; u8 const * raw; b64 is_valid; };
 		// NOT INCLUDE '\0'
 		u64 len;
 	};
@@ -62,7 +61,7 @@ typedef union {
 // |================================================================================================|
 // |> [StrZ]: init                                                                                  |
 
-#define STR_Z(_ptr_z, _len) ((StrZ){.ptr = (_ptr_z), .len = (_len)})
+#define STR_Z(_raw, _len) ((StrZ){.raw = (_raw), .len = (_len)})
 
 #define STR_Z_NIL STR_Z(0, 0)
 #define Z(lit) STR_Z((u8*)(void*)(lit), sizeof(lit) - 1)

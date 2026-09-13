@@ -2,7 +2,7 @@
 #define STD_RUN_ENV_H
 
 #include "std/run/run.h"
-#include "std/str/str.h"
+#include "std/str/core.h"
 
 typedef struct {
 	StrZ full;

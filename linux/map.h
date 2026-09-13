@@ -13,16 +13,20 @@
 #define LINUX_MAP_PROT_NONE  0x0
 #define LINUX_MAP_PROT_READ  0x1
 #define LINUX_MAP_PROT_WRITE 0x2
+#define LINUX_MAP_PROT_EXEC  0x3
+
 #define LINUX_MAP_SHARED     0x01
 #define LINUX_MAP_PRIVATE    0x02
 #define LINUX_MAP_ANONYMOUS  0x20
 
 // [mmap]
-void * linux_mmap(void * addr, u64 length, i32 prot, i32 flags, i32 fd, u64 offset);
+iptr linux_mmap(uptr addr, u64 length, i32 prot, i32 flags, i32 fd, u64 offset);
 // [munmap]
-iptr linux_munmap(void * addr, u64 length);
+iptr linux_munmap(uptr addr, u64 length);
 // [madvice]
-iptr linux_madvice(void * addr, u64 length, i32 advice);
+iptr linux_madvice(uptr addr, u64 length, i32 advice);
+// [mprotect]
+iptr linux_mprotect(uptr addr, u64 length, i32 prot);
 
 // [memfd_create]
 LinuxFd linux_memfd_create(char const * name, u32 flags);

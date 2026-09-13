@@ -1,17 +1,17 @@
 #!/bin/bash
 set -e
 
-mkdir -p "risk/build/"
-out="risk/build/risk"
+mkdir -p "build/"
+out="build/risk"
 
 src_find() {
-	find "$@" -type f -name '*.c' ! -path '*/_[^/]*.c'
+	find "$@" -type d -name '_*' -prune -o -type f -name '*.c' ! -name '_*' -print
 }
 
-use=("-I.")
+use=("-I..")
 # use=($(find "src" -name "*.h" | grep -v '/_[^/]*\.h$'))
 # src=($(find "src/" -name "*.c" | grep -v '/_[^/]*\.c$'))
-src=($(src_find "."))
+src=($(src_find ".."))
 
 flags=(
 	"-nostdlib"
@@ -116,6 +116,4 @@ case "$os" in
 
 	*) help ;;
 esac
-
-echo ""
 

@@ -1,9 +1,11 @@
-#ifndef STD_FMT_DEF_H
-#define STD_FMT_DEF_H
+#ifndef STD_FMT_CORE_H
+#define STD_FMT_CORE_H
 
 #include "std/core.h"
 #include "std/mem/reg.h"
-#include "std/str/str.h"
+#include "std/str/core.h"
+#include "std/stream/core.h"
+#include "std/fs/core.h"
 
 // |================================================================================================|
 // |> Format State                                                                                  |
@@ -13,34 +15,37 @@ typedef struct {
 	REG_EMBED(reg, ptr, any, raw, len);
 	u64 pos; RegMan man;
 	StrMut last;
-} FmtOut;
+} Fmt;
 
 // |================================================================================================|
-// |> [FmtOut]: constructors                                                                        |
+// |> [Fmt]: constructors                                                                           |
 
-FmtOut fmt_init(RegMan man, RegInit init);
-FmtOut fmt_from_slice(void * ptr, u64 len);
+Fmt fmt_init(RegMan man);
+Fmt fmt_from_slice(void * ptr, u64 len);
 #define FMT_ON_STACK(size) fmt_from_slice(ALLOCA(size), size)
 
 // |================================================================================================|
-// |> [FmtOut]: mark and load                                                                       |
+// |> [Fmt]: mark and load                                                                          |
 
-void fmt_reset(FmtOut * out);
+void fmt_reset(Fmt * out);
 
 // |================================================================================================|
-// |> [FmtOut]: helpers                                                                             |
+// |> [Fmt]: helpers                                                                                |
 
-Str fmt_as_str(FmtOut const * out);
+Str fmt_as_str(Fmt const * out);
+b8 fmt_flush_stream(Fmt * fmt, Stream * stream);
+b8 fmt_flush_file(Fmt * fmt, u8z const * path);
 
-void fmt_rebase(FmtOut * out, Reg reg);
-b8   fmt_reserve(FmtOut * out, u64 add);
+void fmt_rebase(Fmt * out, Reg reg);
+b8   fmt_reserve(Fmt * out, u64 add);
 
 // |================================================================================================|
 // |> Raw Formatting                                                                                |
 // |================================================================================================|
 
-b8 fmt_raw_ex(FmtOut * out, Str lit);
-#define fmt_raw(out, lit) fmt_raw_ex(out, S(lit))
+b8 fmt_lit_ex(Fmt * out, Str bs);
+#define fmt_lit(out, bs) fmt_lit_ex(out, S(bs))
+#define fmt_lit_z(out, bs) fmt_lit_ex(out, S(bs "\0"))
 
 // |================================================================================================|
 // |> String Formatting                                                                             |
@@ -65,11 +70,10 @@ typedef struct {
 } FmtStrShot;
 
 FmtStrShot fmt_str_shot(Str src, FmtStrStyle * style);
-b8         fmt_str_write(FmtOut * out, Str src, FmtStrStyle const * style, FmtStrShot shot);
-b8         fmt_str_ex(FmtOut * out, Str src, FmtStrStyle * style);
+b8         fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot);
+b8         fmt_str_ex(Fmt * out, Str src, FmtStrStyle * style);
 
 #define fmt_str(out, src, style...) fmt_str_ex(out, src, &(FmtStrStyle){style})
-#define fmt_lit(out, src, style...) fmt_str(out, S(src), style)
 
 // |================================================================================================|
 // |> Number Formatting                                                                             |
@@ -87,9 +91,9 @@ typedef struct {
 } FmtNumShot;
 
 FmtNumShot fmt_num_shot(u64 src, b8 neg, FmtNumStyle * style);
-b8         fmt_num_write(FmtOut * fmt, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot);
+b8         fmt_num_write(Fmt * fmt, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot);
 
-b8 fmt_num_ex(FmtOut * out, u64 src, u8 neg, FmtNumStyle * style);
+b8 fmt_num_ex(Fmt * out, u64 src, u8 neg, FmtNumStyle * style);
 
 // |================================================================================================|
 // |> Number Formatting: u64                                                                        |
@@ -102,8 +106,32 @@ b8 fmt_num_ex(FmtOut * out, u64 src, u8 neg, FmtNumStyle * style);
 // |> Number Formatting: i64                                                                        |
 // |================================================================================================|
 
-b8 fmt_i64_ex(FmtOut * out, i64 src, FmtNumStyle * style);
+b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style);
 #define fmt_i64(out, src, style...) fmt_i64_ex(out, src, &(FmtNumStyle){style})
+
+// |================================================================================================|
+// |> ANSI colors                                                                                   |
+
+#define ANSI_BOLD       "\x1B[1m"
+#define ANSI_BOLD_RESET "\x1B[22m"
+
+#define ANSI_BLACK   "\x1B[30m"
+#define ANSI_RED     "\x1B[31m"
+#define ANSI_GREEN   "\x1B[32m"
+#define ANSI_YELLOW  "\x1B[33m"
+#define ANSI_BLUE    "\x1B[34m"
+#define ANSI_MAGENTA "\x1B[35m"
+#define ANSI_CYAN    "\x1B[36m"
+#define ANSI_WHITE   "\x1B[37m"
+
+#define ANSI_8B(n)        "\x1B[38;5;" n "m"
+#define ANSI_24B(r, g, b) "\x1B[38;2;" r ";" g ";" b "m"
+
+#define ANSI_FG_RESET   "\x1B[39m"
+#define ANSI_RESET      "\x1B[m" // "\x1B[0m"
+
+// |================================================================================================|
+// |> TRASH                                                                                         |
 
 // StrMut bump_raw_lit_ex(BumpRaw * bump, Str str);
 // #define bump_raw_lit(bump, lit) bump_raw_lit_ex(bump, S(lit))
@@ -135,4 +163,4 @@ b8 fmt_i64_ex(FmtOut * out, i64 src, FmtNumStyle * style);
 // StrMut bump_i64_ex(Bump * bump, i64 num, FmtNum fmt);
 // #define bump_i64(bump, num, fmt...) bump_i64_ex(bump, num, (FmtNum){fmt})
 
-#endif // !STD_FMT_DEF_H
+#endif // !STD_FMT_CORE_H

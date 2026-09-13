@@ -3,10 +3,21 @@
 
 #include "std/core.h"
 
-void * memset(void * dst, u8 byte, u64 len);
-void * memcpy(void * dst, void const * src, u64 len);
+// |================================================================================================|
+// |> LIBC BUILTINS                                                                                 |
+
+void * memset (void * dst, u8 byte, u64 len);
+void * memcpy (void * dst, void const * src, u64 len);
 void * memmove(void * dst, void const * src, u64 len);
-i32    memcmp(void const * a, void const * b, u64 len);
-void * memchr(void const * src, u64 len, u8 byte);
+i32    memcmp (void const * a, void const * b, u64 len);
+void * memchr (void const * src, u64 len, u8 byte);
+
+#define memmov memmove
+
+// |================================================================================================|
+// |> ALIGN UP/DOWN                                                                                 |
+
+u64 mem_align_up  (u64 value, u64 align);
+u64 mem_align_down(u64 value, u64 align);
 
 #endif // !STD_MEM_CORE_H

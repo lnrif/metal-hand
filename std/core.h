@@ -34,6 +34,7 @@
 #define IS_TYPE(expr, type) _Generic((expr), type: 1, default: 0)
 #define UNUSED(x...) (void)(x)
 #define AS(T, expr) ((T*)(void*)(expr))
+#define MAYBE
 
 // |================================================================================================|
 // |> UNSIGNED                                                                                      |
@@ -101,9 +102,11 @@ typedef enum: u8 { false, true } b8;
 #define bool(x) ((b8)((x) != 0))
 
 typedef u32 b32;
+typedef u64 b64;
 
 STATIC_ASSERT(sizeof(b8)  == 1);
 STATIC_ASSERT(sizeof(b32) == 4);
+STATIC_ASSERT(sizeof(b64) == 8);
 
 // |================================================================================================|
 // |> PTR                                                                                           |
@@ -122,6 +125,7 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 #define GB(x) ((u64)(x) << 30)
 #define TB(x) ((u64)(x) << 40)
 
+#define PTR_NIL ((uptr)0)
 #define LEN(arr...) ((u64)(sizeof(arr) / sizeof((arr)[0])))
 
 // |================================================================================================|
@@ -139,6 +143,9 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 #else
 	#define UNREACHABLE __builtin_unreachable()
 #endif
+
+#define alignas _Alignas
+#define alignof _Alignof
 
 // |================================================================================================|
 // |> ATTRIBUTES                                                                                    |
@@ -211,5 +218,6 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 #define CLAMP(x, min, max) MAX(min, MIN(x, max))
 
 #define DIV_CEIL(x, d) _DIV_CEIL(x, d, UNIQ(_urm_div_ceil_))
+#define ALIGN_IS_SANE(x) ((x) != 0 && ((x) & ((x) - 1)) == 0)
 
 #endif // !STD_CORE_H
