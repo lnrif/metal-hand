@@ -17,72 +17,72 @@ static b8 args_build_help(ArgsState * state, ArgsFiles * files, ArgsMem * mem) {
 	// Str const release = state->release ? S("enabled (true)") : S("disabled (false, debug mode)");
 	Str const release = false ? S("enabled (true)") : S("disabled (false, debug mode)");
 
-	// (void)fmt_write(state->out,
-	// 	FMT_COLOR(FMT_RESET ";" FMT_BOLD ";" FMT_GREY), FMT_LIT("|> "),
-	// 	FMT_COLOR(FMT_ORANGE), FMT_LIT("b, build"), FMT_COLOR(FMT_CYAN), FMT_LIT(" <input.rk>"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("command for building a program from source code:"),
-	//
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("1) read file "), FMT_COLOR(FMT_CYAN),
-	// 		FMT_LIT("<input.rk>"), FMT_STR(beg), FMT_STR(files->input), FMT_STR(end),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("2) parse, build AST, type and others checks..."),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("3) if not errors - compile, otherwise print diagnostic and stop"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("4) programs put to "), FMT_COLOR(FMT_CYAN),
-	// 		FMT_LIT("[output]"), FMT_STR(beg), FMT_STR(files->output), FMT_STR(end),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_COLOR(FMT_RED), FMT_LIT("[!]"),
-	// 	FMT_COLOR(FMT_GREY), FMT_LIT(" if file "),
-	// 	FMT_COLOR(FMT_CYAN), FMT_LIT("[output]"),
-	// 	FMT_COLOR(FMT_GREY), FMT_LIT(" exist, then truncate it"),
-	// );
-	//
-	// (void)fmt_write(state->out,
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|\n|> "),
-	// 	FMT_COLOR_DYN(input), FMT_LIT("<input.rk>"), FMT_STR(beg), FMT_STR(files->input), FMT_STR(end),
-	// );
-	//
-	// (void)fmt_write(state->out,
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
-	// 	FMT_COLOR(FMT_CYAN), FMT_LIT("[output]"), FMT_STR(beg), FMT_STR(files->output), FMT_STR(end),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("optinal output path, by default <input>"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("if input file does not have extention, then \"output\""),
-	// );
-	//
-	// (void)fmt_write(state->out,
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
-	// 	FMT_COLOR(FMT_GREEN), FMT_LIT("[--release] = "), FMT_STR(release),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("enables release build mode, makes executable faster"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("but building can took more time and memory"),
-	//
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
-	// 	FMT_COLOR(FMT_GREEN), FMT_LIT("-m, --mem-limit"),
-	// 	FMT_COLOR(FMT_CYAN), FMT_LIT(" <memory> = "), FMT_MEM(mem->max),
-	// 	FMT_COLOR(FMT_GREY), FMT_LIT(" (for example 0, 64KiB, 16MiB, 4GiB)"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("limit maximal memory usage"),
-	// );
-	//
-	// (void)fmt_write(state->out,
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
-	// 	FMT_COLOR(FMT_ORANGE), FMT_LIT("[-h, --help]"),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LIT("shows this message"),
-	//
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
-	// 	FMT_LOC_DEBUG(CALL),
-	// 	FMT_COLOR(FMT_RESET),
-	// );
+	(void)fmt_write(state->out,
+		FMT_COLOR(FMT_RESET ";" FMT_BOLD ";" FMT_GREY), FMT_LIT("|> "),
+		FMT_COLOR(FMT_ORANGE), FMT_LIT("b, build"), FMT_COLOR(FMT_CYAN), FMT_LIT(" <input.rk>"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("command for building a program from source code:"),
+
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("1) read file "), FMT_COLOR(FMT_CYAN),
+			FMT_LIT("<input.rk>"), FMT_STR(beg), FMT_STR(files->input), FMT_STR(end),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("2) parse, build AST, type and others checks..."),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("3) if not errors - compile, otherwise print diagnostic and stop"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("4) programs put to "), FMT_COLOR(FMT_CYAN),
+			FMT_LIT("[output]"), FMT_STR(beg), FMT_STR(files->output), FMT_STR(end),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_COLOR(FMT_RED), FMT_LIT("[!]"),
+		FMT_COLOR(FMT_GREY), FMT_LIT(" if file "),
+		FMT_COLOR(FMT_CYAN), FMT_LIT("[output]"),
+		FMT_COLOR(FMT_GREY), FMT_LIT(" exist, then truncate it"),
+	);
+
+	(void)fmt_write(state->out,
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|\n|> "),
+		FMT_COLOR_DYN(input), FMT_LIT("<input.rk>"), FMT_STR(beg), FMT_STR(files->input), FMT_STR(end),
+	);
+
+	(void)fmt_write(state->out,
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
+		FMT_COLOR(FMT_CYAN), FMT_LIT("[output]"), FMT_STR(beg), FMT_STR(files->output), FMT_STR(end),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("optinal output path, by default <input>"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("if input file does not have extention, then \"output\""),
+	);
+
+	(void)fmt_write(state->out,
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
+		FMT_COLOR(FMT_GREEN), FMT_LIT("[--release] = "), FMT_STR(release),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("enables release build mode, makes executable faster"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("but building can took more time and memory"),
+
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
+		FMT_COLOR(FMT_GREEN), FMT_LIT("-m, --mem-limit"),
+		FMT_COLOR(FMT_CYAN), FMT_LIT(" <memory> = "), FMT_MEM(mem->max),
+		FMT_COLOR(FMT_GREY), FMT_LIT(" (for example 0, 64KiB, 16MiB, 4GiB)"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("limit maximal memory usage"),
+	);
+
+	(void)fmt_write(state->out,
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("|> "),
+		FMT_COLOR(FMT_ORANGE), FMT_LIT("[-h, --help]"),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LIT("shows this message"),
+
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LINE, FMT_COLOR(FMT_GREY), FMT_LIT("| "),
+		FMT_LOC_DEBUG(CALL),
+		FMT_COLOR(FMT_RESET),
+	);
 
 	return true;
 };
