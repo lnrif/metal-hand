@@ -10,20 +10,26 @@
 // |================================================================================================|
 
 #if defined(__x86_64__)
-	#define X86_64 1
+	#define X86_64  1
+	#define AARCH64 0
 #elif defined(__aarch64__)
-	#define ARM64 1
+	#define X86_64  0
+	#define AARCH64 1
 #else
 	#error "unsupported architecture"
 #endif
 
 #if defined(__linux__)
-	#define LINUX 1
+	#define LINUX   1
+	#define WINDOWS 0
 #elif defined(_WIN32)
+	#define LINUX   0
 	#define WINDOWS 1
 #else
 	#error "unsupported OS"
 #endif
+
+#define LINUX_SYSCALL (LINUX && (X86_64 || AARCH64))
 
 // |================================================================================================|
 // |> TYPES                                                                                         |

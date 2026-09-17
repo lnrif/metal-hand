@@ -1,3 +1,10 @@
+#include "std/core.h"
+
+#if LINUX_SYSCALL
+// |================================================================================================|
+// |> LINUX                                                                                         |
+// |================================================================================================|
+
 #include "linux/map.h"
 #include "linux/call.h"
 
@@ -26,4 +33,4 @@ LinuxFd linux_memfd_create(char const * name, u32 flags) {
 	return (LinuxFd)syscall2(319, (uptr)name, (uptr)flags);
 };
 
-
+#endif // !LINUX_SYSCALL
