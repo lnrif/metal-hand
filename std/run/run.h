@@ -3,7 +3,7 @@
 
 #include "std/core.h"
 
-#if defined(__linux__) && defined(__x86_64__)
+#if LINUX
 // |================================================================================================|
 // |> LINUX (x86_64)                                                                                |
 // |================================================================================================|
@@ -19,18 +19,20 @@ typedef struct {
 // |> WINDOWS (x86_64)                                                                              |
 // |================================================================================================|
 
+#error "TODO"
+
 typedef void * Run;
 
 #endif
 
 void run(Run run);
 
-#if defined(__linux__) && defined(__x86_64__)
+#if LINUX && (X86_64 || AARCH64)
 // |================================================================================================|
-// |> LINUX (x86_64)                                                                                |
+// |> LINUX                                                                                         |
 // |================================================================================================|
 
-NAKED void _start(void);
+void NAKED _start(void);
 
 #elif defined(_WIN32) && defined(__x86_64__)
 // |================================================================================================|
@@ -49,4 +51,5 @@ USED void _start(void);
 // __declspec(dllimport) wchar_t** __stdcall CommandLineToArgvW(const wchar_t* lpCmdLine, int* pNumArgs);
 // __declspec(dllimport) wchar_t* __stdcall GetEnvironmentStringsW(void);
 // __declspec(dllimport) void     __stdcall ExitProcess(unsigned int uExitCode);
+
 #endif // !STD_RUN_H

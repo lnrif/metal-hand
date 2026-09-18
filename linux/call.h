@@ -8,6 +8,36 @@
 // |> LINUX && X86_64                                                                               |
 // |================================================================================================|
 
+#define LINUX_SYS_OPENAT       257
+#define LINUX_SYS_FTRUNCATE     77
+#define LINUX_SYS_MKDIRAT      258
+#define LINUX_SYS_MMAP           9
+#define LINUX_SYS_MUNMAP        11
+#define LINUX_SYS_MADVISE       28
+#define LINUX_SYS_MPROTECT      10
+#define LINUX_SYS_MEMFD_CREATE 319
+#define LINUX_SYS_NANOSLEEP     35
+
+#define LINUX_SYS_READ           0
+#define LINUX_SYS_WRITE          1
+#define LINUX_SYS_READV         19
+#define LINUX_SYS_WRITEV        20
+
+#define LINUX_SYS_RECVMSG       47
+#define LINUX_SYS_SENDMSG       46
+
+#define LINUX_SYS_IOCTL         16
+#define LINUX_SYS_CLOSE          3
+
+#define LINUX_SYS_SOCKET        41
+#define LINUX_SYS_CONNECT       42
+
+#define LINUX_SYS_STATX        332
+#define LINUX_STATX_SIZE 0x00000200U
+
+#define LINUX_SYS_EXIT        60
+#define LINUX_SYS_EXIT_GROUP  231
+
 static inline iptr syscall0(iptr num) {
 	register iptr rax __asm__("rax") = num;
 	iptr ret;
@@ -131,6 +161,36 @@ static inline iptr syscall6(iptr num, uptr a1, uptr a2, uptr a3, uptr a4, uptr a
 // |================================================================================================|
 // |> LINUX && ARM64                                                                               |
 // |================================================================================================|
+
+#define LINUX_SYS_OPENAT        56
+#define LINUX_SYS_FTRUNCATE     46
+#define LINUX_SYS_MKDIRAT       34
+#define LINUX_SYS_MMAP         222
+#define LINUX_SYS_MUNMAP       215
+#define LINUX_SYS_MADVISE      233
+#define LINUX_SYS_MPROTECT     226
+#define LINUX_SYS_MEMFD_CREATE 279
+#define LINUX_SYS_NANOSLEEP    101
+
+#define LINUX_SYS_READ          63
+#define LINUX_SYS_WRITE         64
+#define LINUX_SYS_READV         65
+#define LINUX_SYS_WRITEV        66
+
+#define LINUX_SYS_RECVMSG      212
+#define LINUX_SYS_SENDMSG      211
+
+#define LINUX_SYS_IOCTL         29
+#define LINUX_SYS_CLOSE         57
+
+#define LINUX_SYS_SOCKET       198
+#define LINUX_SYS_CONNECT      203
+
+#define LINUX_SYS_STATX        332
+#define LINUX_STATX_SIZE 0x00000200U
+
+#define LINUX_SYS_EXIT         93
+#define LINUX_SYS_EXIT_GROUP   94
 
 static inline iptr syscall0(iptr num) {
 	register iptr x8 __asm__("x8") = num;

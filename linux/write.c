@@ -15,12 +15,12 @@
 
 // [read]
 i64 linux_read(LinuxFd handle, void * buf, u64 count) {
-	return syscall3(0, (uptr)handle, (uptr)buf, (uptr)count);
+	return syscall3(LINUX_SYS_READ, (uptr)handle, (uptr)buf, (uptr)count);
 };
 
 // [write]
 i64 linux_write(LinuxFd handle, void const * ptr, u64 len) {
-	return syscall3(1, (uptr)handle, (uptr)ptr, (uptr)len);
+	return syscall3(LINUX_SYS_WRITE, (uptr)handle, (uptr)ptr, (uptr)len);
 };
 
 i64 linux_write_str(LinuxFd handle, Str s) {
@@ -32,12 +32,12 @@ i64 linux_write_str(LinuxFd handle, Str s) {
 
 // [readv]
 i64 linux_read_vec(LinuxFd handle, LinuxVec * ptr, u32 len) {
-	return syscall3(19, (uptr)handle, (uptr)ptr, (uptr)len);
+	return syscall3(LINUX_SYS_READV, (uptr)handle, (uptr)ptr, (uptr)len);
 };
 
 // [writev]
 i64 linux_write_vec(LinuxFd handle, LinuxVec * ptr, u32 len) {
-	return syscall3(20, (uptr)handle, (uptr)ptr, (uptr)len);
+	return syscall3(LINUX_SYS_WRITEV, (uptr)handle, (uptr)ptr, (uptr)len);
 };
 
 // |================================================================================================|
@@ -45,12 +45,12 @@ i64 linux_write_vec(LinuxFd handle, LinuxVec * ptr, u32 len) {
 
 // [recvmsg]
 i64 linux_recv_msg(LinuxFd handle, LinuxMsg * ptr, u32 flags) {
-	return syscall3(47, (uptr)handle, (uptr)ptr, (uptr)flags);
+	return syscall3(LINUX_SYS_RECVMSG, (uptr)handle, (uptr)ptr, (uptr)flags);
 };
 
 // [sendmsg]
 i64 linux_send_msg(LinuxFd handle, LinuxMsg * ptr, u32 flags) {
-	return syscall3(46, (uptr)handle, (uptr)ptr, (uptr)flags);
+	return syscall3(LINUX_SYS_SENDMSG, (uptr)handle, (uptr)ptr, (uptr)flags);
 };
 
 // |================================================================================================|
@@ -58,7 +58,7 @@ i64 linux_send_msg(LinuxFd handle, LinuxMsg * ptr, u32 flags) {
 
 // [ioctl]
 i64 linux_io_ctrl(LinuxFd handle, u64 request, void * arg) {
-	return syscall3(16, (uptr)handle, (uptr)request, (uptr)arg);
+	return syscall3(LINUX_SYS_IOCTL, (uptr)handle, (uptr)request, (uptr)arg);
 };
 
 b8 linux_is_tty(LinuxFd handle) {
@@ -68,7 +68,7 @@ b8 linux_is_tty(LinuxFd handle) {
 
 // [close]
 i64 linux_close(LinuxFd handle) {
-	return syscall1(3, (uptr)handle);
+	return syscall1(LINUX_SYS_CLOSE, (uptr)handle);
 };
 
 // |================================================================================================|
@@ -76,12 +76,12 @@ i64 linux_close(LinuxFd handle) {
 
 // [socket]
 LinuxFd linux_socket(u32 domain, u32 type, u32 protocol) {
-	return (LinuxFd)syscall3(41, (uptr)domain, (uptr)type, (uptr)protocol);
+	return (LinuxFd)syscall3(LINUX_SYS_SOCKET, (uptr)domain, (uptr)type, (uptr)protocol);
 };
 
 // [connect]
 i64 linux_connect(LinuxFd handle, LinuxAddr const * addr, u32 addr_len) {
-	return (i64)syscall3(42, (uptr)handle, (uptr)addr, (uptr)addr_len);
+	return (i64)syscall3(LINUX_SYS_CONNECT, (uptr)handle, (uptr)addr, (uptr)addr_len);
 };
 
 #endif

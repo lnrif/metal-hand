@@ -11,7 +11,7 @@
 // [nanosleep]
 i64 linux_nanosleep(i64 sec, i64 nsec) {
 	struct { i64 sec; i64 nsec; } req = {sec, nsec};
-	return syscall2(35, (uptr)&req, 0);
+	return syscall2(LINUX_SYS_NANOSLEEP, (uptr)&req, 0);
 };
 
 #endif // !LINUX_SYS_CALL

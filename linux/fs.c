@@ -10,17 +10,17 @@
 
 // [openat]
 i64 linux_openat(LinuxFd dir, u8z const * path, u32 flags, u32 mode) {
-	return syscall4(257, (uptr)dir, (uptr)path, (uptr)flags, (uptr)mode);
+	return syscall4(LINUX_SYS_OPENAT, (uptr)dir, (uptr)path, (uptr)flags, (uptr)mode);
 };
 
 // [ftruncate]
 i64 linux_ftruncate(LinuxFd fd, u64 length) {
-	return syscall2(77, (uptr)fd, (uptr)length);
+	return syscall2(LINUX_SYS_FTRUNCATE, (uptr)fd, (uptr)length);
 };
 
 // [mkdirat]
 iptr linux_mkdirat(LinuxFd dir, u8z const * path, u32 mode) {
-	return syscall3(258, (uptr)dir, (uptr)path, (uptr)mode);
+	return syscall3(LINUX_SYS_MKDIRAT, (uptr)dir, (uptr)path, (uptr)mode);
 };
 
 // LinuxFd linux_file_open_read(u8z const * path) {
@@ -68,9 +68,6 @@ iptr linux_mkdirat(LinuxFd dir, u8z const * path, u32 mode) {
 // };
 
 i64 linux_file_size(u8z const * path) {
-	#define LINUX_SYS_STATX 332
-	#define LINUX_STATX_SIZE 0x00000200U
-
 	LinuxStatx st = {0};
 	iptr const res = syscall5(LINUX_SYS_STATX, (uptr)AT_FDCWD, (uptr)path, 0, LINUX_STATX_SIZE, (uptr)&st);
 

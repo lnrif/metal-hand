@@ -1,17 +1,17 @@
 #!/bin/bash
 set -e
 
-mkdir -p "build/"
-out="build/risk"
+mkdir -p "risk/build/"
+out="risk/build/risk"
 
 src_find() {
 	find "$@" -type d -name '_*' -prune -o -type f -name '*.c' ! -name '_*' -print
 }
 
-use=("-I..")
+use=("-I.")
 # use=($(find "src" -name "*.h" | grep -v '/_[^/]*\.h$'))
 # src=($(find "src/" -name "*.c" | grep -v '/_[^/]*\.c$'))
-src=($(src_find ".."))
+src=($(src_find "linux" "windows" "risk" "std"))
 
 flags=(
 	"-nostdlib"
@@ -23,11 +23,13 @@ flags=(
 	"-Wshadow"
 	"-Wconversion"
 	"-Wsign-conversion"
-	"-fuse-ld=lld-22"
+	"-fuse-ld=lld"
 )
 
 linux=(
-	"-target" "x86_64-unknown-linux-gnu"
+	"-target"
+	# "x86_64-unknown-linux-gnu"
+	"aarch64-unknown-linux-gnu"
 	"-Wl,-e,_start"
 	"-fno-pie"
 	"-no-pie"

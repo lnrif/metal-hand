@@ -23,6 +23,7 @@ typedef union {
 typedef Str StrOpt;
 
 #define STR(_raw, _len) ((Str){.raw = (_raw), .len = (_len)})
+#define STR_PTR(_ptr, _len) ((Str){.ptr = (_ptr), .len = (_len)})
 #define STR_NIL STR(0, 0)
 #define S(lit)  STR((u8*)(void*)(lit), sizeof(lit) - 1)
 

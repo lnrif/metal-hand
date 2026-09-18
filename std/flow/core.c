@@ -5,7 +5,7 @@
 // |================================================================================================|
 // |> panic                                                                                         |
 
-void NO_RETURN flow_panic(FLowPanic panic) {
+void NO_RETURN flow_panic(FlowPanic panic) {
 	Stream err = stream_output();
 
 	stream_write_arr(&err,

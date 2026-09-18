@@ -9,9 +9,9 @@
 // |================================================================================================|
 
 // [exit]
-NO_RETURN void linux_thread_exit(u8 status);
+void NO_RETURN linux_thread_exit(u8 status);
 // [exit_group]
-NO_RETURN void linux_proc_exit(u8 status);
+void NO_RETURN linux_proc_exit(u8 status);
 
 #else
 	#error "this file expected to use only in linux"

@@ -1,20 +1,27 @@
 #include "std/fmt/core.h"
 #include "std/mem/reg.h"
-#include "std/str/str.h"
+#include "std/str/core.h"
 #include "std/mem/core.h"
+#include "std/flow/core.h"
 
 // |================================================================================================|
 // |> [Fmt]: constructors                                                                        |
 
-Fmt fmt_init(RegMan man) {
-	return (Fmt){.reg = REG_NIL, .pos = 0, .man = man, .last = STR_MUT_NIL};
+Fmt fmt_init(RegMan man, FmtMask flow) {
+	return (Fmt){
+		.reg = REG_NIL,
+		.pos = 0,
+		.man = man,
+		.last = STR_MUT_NIL,
+		.flow = flow,
+	};
 };
 
-Fmt fmt_from_slice(void * ptr, u64 len) {
+Fmt fmt_from_slice(void * ptr, u64 len, FmtMask flow) {
 	return (Fmt){
 		.ptr = (uptr)ptr, .len = len,
 		.pos = 0, .man = REG_MAN_NIL,
-		.last = STR_MUT_NIL,
+		.last = STR_MUT_NIL, .flow = flow,
 	};
 };
 
@@ -38,6 +45,7 @@ void fmt_rebase(Fmt * out, Reg reg) {
 		},
 		.pos = out->pos,
 		.man = out->man,
+		.flow = out->flow,
 	};
 };
 
@@ -89,19 +97,19 @@ FmtStrShot fmt_str_shot(Str src, FmtStrStyle * style) {
 	if (style->fill == 0) style->fill = ' ';
 
 	u64 str_len = src.len;
-	if (style->escape) {
+	if (FMT_S_IS_ESCAPE(style->opt)) {
 		str_len = 0;
 		for (u32 i = 0; i < src.len; i += 1) switch (src.raw[i]) {
 			case '"': case '\e': case '\t': case '\r': case '\n': case '\0': str_len += 2; break;
-			default: str_len += (src.raw[i] < 32) ? 4 : 1;                      break;
+			default: str_len += (src.raw[i] < 32) ? 4 : 1;                                 break;
 		};
 	};
 
-	u64 len = str_len;
-	if (style->quotes) len += 2;
+	u64 full_len = str_len;
+	if (FMT_S_IS_QUOTES(style->opt)) full_len += 2;
 
-	if (len < style->width) len = style->width;
-	return (FmtStrShot){.len = len, .str_len = str_len};
+	if (full_len < style->width) full_len = style->width;
+	return (FmtStrShot){.full_len = full_len, .str_len = str_len};
 };
 
 static void fmt_str_escaped(u8 * write, Str src) {
@@ -137,33 +145,37 @@ static void fmt_str_escaped(u8 * write, Str src) {
 };
 
 b8 fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot) {
-	if (!fmt_reserve(out, shot.len)) return false;
+	if (!fmt_reserve(out, shot.full_len)) return false;
 
 	u8 * ptr = (u8*)out->ptr + out->pos;
-	u64 const offset = style->quotes ? 1 : 0;
+	u64 const offset = FMT_S_IS_QUOTES(style->opt) ? 1 : 0;
 
-	u8 * space = style->right ? &ptr[0] : &ptr[shot.str_len + offset * 2];
-	u64 spaces_count = shot.len - shot.str_len - offset;
+	// TODO: add mid align
+	u8 * space = FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.str_len + offset * 2];
+	u64 spaces_count = shot.full_len - shot.str_len - offset * 2;
 	memset(space, style->fill, spaces_count);
 
-	u8 * write = style->right ? &ptr[shot.len - shot.str_len - offset * 2] : &ptr[offset];
+	u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
 
-	if (style->quotes) {
-		write[0] = '"';
-		write += 1;
-		write[shot.str_len] = '"';
+	if (FMT_S_IS_QUOTES(style->opt)) {
+		write[0] = '"'; write += 1;
 	};
 
-	if (style->escape) {
+	if (FMT_S_IS_ESCAPE(style->opt)) {
 		fmt_str_escaped(write, src);
 	} else {
 		memcpy(write, src.raw, src.len);
 	};
 
-	if (style->quotes) write[shot.str_len] = '"';
+	write += shot.str_len;
 
-	out->pos += shot.len;
-	out->last = (StrMut){.raw = ptr, .len = shot.len};
+	if (FMT_S_IS_QUOTES(style->opt)) {
+		write[0] = '"'; write += 1;
+	};
+
+	out->pos += shot.full_len;
+	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+
 	return true;
 };
 
@@ -177,74 +189,85 @@ b8 fmt_str_ex(Fmt * out, Str src, FmtStrStyle * style) {
 
 FmtNumShot fmt_num_shot(u64 src, b8 neg, FmtNumStyle * style) {
 	if (style->fill == 0) style->fill = ' ';
-	if (style->base == 0) style->base = 10;
 
-	if (style->base != 2 && style->base != 8 && style->base != 10 && style->base != 16) {
-		// TODO: add error shot value
-		return (FmtNumShot){0};
+	u64 base;
+	switch (FMT_N_GET_BASE(style->opt)) {
+		case FMT_N_BIN: base =  2; break;
+		case FMT_N_OCT: base =  8; break;
+		case FMT_N_DEC: base = 10; break;
+		case FMT_N_HEX: base = 16; break;
 	};
 
 	u64 num_len = 0; for (;;) {
 		num_len += 1;
-		src /= style->base;
+		src /= base;
 		if (src == 0) break;
 	};
+
 	u64 const digits_len = num_len > style->digits ? num_len : style->digits;
 
 	u64 field_len = digits_len;
-	if (neg || style->sign)                field_len += 1;
-	if (style->prefix && style->base != 10) field_len += 2;
+	if (neg || FMT_N_IS_SIGN(style->opt)) field_len += 1;
+	if (base != 10 && FMT_N_IS_PREFIX(style->opt)) field_len += 2;
 
-	u64 len = field_len > style->width ? field_len : style->width;
+	u64 full_len = field_len > style->width ? field_len : style->width;
 	
 	return (FmtNumShot){
-		.len = len,
+		.full_len = full_len,
 		.field_len = field_len,
 		.digits_len = digits_len,
 	};
-
 };
 
 b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot) {
-	if (!fmt_reserve(out, shot.len)) return false;
+	if (!fmt_reserve(out, shot.full_len)) return false;
 
+	// TODO: add mid align
 	u8 * ptr = (u8 *)out->ptr + out->pos;
-	u8 * space = style->right ? &ptr[0] : &ptr[shot.field_len];
-	memset(space, style->fill, shot.len - shot.field_len);
+	u8 * space = FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.field_len];
+	memset(space, style->fill, shot.full_len - shot.field_len);
 
-	u8 * write = style->right ? &ptr[shot.len - shot.field_len] : &ptr[0];
+	u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.field_len] : &ptr[0];
 	u64 w = 0;
 
-	if (style->sign) {
+	if (FMT_N_IS_SIGN(style->opt)) {
 		write[w] = neg ? '-' : (src == 0 ? style->fill : '+'); w += 1;
 	} else if (neg) {
 		write[w] = '-'; w += 1;
 	};
 
-	if (style->prefix) switch (style->base) {
-		case 2: {
+	if (FMT_N_IS_PREFIX(style->opt)) switch (FMT_N_GET_BASE(style->opt)) {
+		case FMT_N_BIN: {
 			write[w] = '0'; w += 1;
 			write[w] = 'b'; w += 1;
 		} break;
-		case 8: {
+		case FMT_N_OCT: {
 			write[w] = '0'; w += 1;
 			write[w] = 'o'; w += 1;
 		} break;
-		case 10: break;
-		case 16: {
+		case FMT_N_DEC: break;
+		case FMT_N_HEX: {
 			write[w] = '0'; w += 1;
 			write[w] = 'x'; w += 1;
 		} break;
 	};
 
-	u8 buf[64] = {0};
+	u64 base;
+	switch (FMT_N_GET_BASE(style->opt)) {
+		case FMT_N_BIN: base =  2; break;
+		case FMT_N_OCT: base =  8; break;
+		case FMT_N_DEC: base = 10; break;
+		case FMT_N_HEX: base = 16; break;
+	};
+
+	u8 buf[sizeof(u64) * 8] = {0};
 	u8 num_idx = sizeof(buf);
 	u8 const * const table = (u8*)"0123456789ABCDEF";
 
 	for (;;) {
 		num_idx -= 1;
-		buf[num_idx] = table[src % style->base];
-		src /= style->base;
+		buf[num_idx] = table[src % base];
+		src /= base;
 		if (src == 0) break;
 	};
 
@@ -253,8 +276,9 @@ b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumSh
 	memset(&write[w], '0', zeros); w += zeros;
 	memcpy(&write[w], &buf[num_idx], num_len);
 
-	out->pos += shot.len;
-	out->last = (StrMut){.raw = ptr, .len = shot.len};
+	out->pos += shot.full_len;
+	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+
 	return true;
 };
 
@@ -274,5 +298,56 @@ b8 fmt_num_ex(Fmt * out, u64 src, u8 neg, FmtNumStyle * style) {
 
 b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style) {
 	return fmt_num_ex(out, src < 0 ? (u64)-src : (u64)src, src < 0, style);
+};
+
+// |================================================================================================|
+// |> Arguments Formatting                                                                          |
+// |================================================================================================|
+
+b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
+	StrMut str = STR_MUT(fmt->ptr + fmt->pos, 0);
+
+	for (u64 i = 0; i < len; i += 1) {
+		FmtArg arg = args[i];
+		FmtMask flow = 1 << FMT_TAG_FLOW(arg.tag);
+		
+		// fmt_lit(fmt, "[");
+		// fmt_u64(fmt, fmt->flow & 0b11, .opt = FMT_N_BIN | FMT_N_NO_PREFIX, .digits = 2);
+		// fmt_lit(fmt, ":");
+		// fmt_u64(fmt, flow, .opt = FMT_N_BIN | FMT_N_NO_PREFIX, .digits = 2);
+		// fmt_lit(fmt, "]");
+		
+		if ((fmt->flow & flow) != flow) continue;
+
+		b8 ok = true;
+		switch (FMT_TAG_TY(arg.tag)) {
+			case FMT_TY_STR: ok = fmt_str_ex(
+				fmt,
+				arg.as.str.src,
+				&arg.as.str.style
+			); break;
+			case FMT_TY_U64: ok = fmt_u64_ex(
+				fmt,
+				arg.as.u64.src,
+				&arg.as.u64.style
+			); break;
+			case FMT_TY_I64: ok = fmt_i64_ex(
+				fmt,
+				arg.as.i64.src,
+				&arg.as.i64.style
+			); break;
+
+			// case FMT_ARG_MEM:                   result = fmt_virt_mem(fmt, arg.as.mem, arg.opt, NULL);   break;
+			// case FMT_ARG_COLOR: if (fmt->color) result = fmt_virt_str(fmt, arg.as.color, arg.opt, NULL); break;
+			default: PANIC("invalid [arg.tag]");
+		};
+
+		if (!ok) return false;
+	};
+
+	str.len = fmt->pos - (uptr)str.ptr;
+	fmt->last = str;
+
+	return true;
 };
 
