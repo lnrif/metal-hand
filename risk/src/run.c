@@ -33,7 +33,19 @@ void run(Run run) { UNUSED(run);
 		proc_exit(255);
 	};
 
-	Fmt _fmt = fmt_init(pages_pinned(&fmt_pages), U32_MAX); Fmt * fmt = &_fmt;
+	Fmt _fmt = fmt_init(pages_pinned(&fmt_pages), 0b01); Fmt * fmt = &_fmt;
+
+	Pages tmp_pages = pages_reserve(MB(16));
+	if (!tmp_pages.is_valid) {
+		stream_write_lit(out,
+			ANSI_BOLD ANSI_RED "[risk:fatal] "
+			ANSI_WHITE "failed to reserve pages for formatter" "\n"
+			ANSI_RESET
+		);
+		proc_exit(255);
+	};
+
+	Fmt _tmp = fmt_init(pages_pinned(&tmp_pages), 0b01); Fmt * tmp = &_tmp;
 
 	// |================================================================================================|
 	// |> setup paths pool                                                                              |
@@ -110,16 +122,37 @@ void run(Run run) { UNUSED(run);
 	// 	proc_exit(1);
 	// };
 
-	// #include "std/fmt/def.h"
-	FMT(fmt,
-		FMT_LIT("|"),
-		FMT_LIT("\x1B[31m", .flow = 1),
-		FMT_LIT("RED", .width = 10, .opt = FMT_S_QUOTES | FMT_RHS),
-		FMT_LIT("\x1B[m", .flow = 1),
-		FMT_LIT("|\n"),
-	);
-	// #include "std/fmt/undef.h"
+	FMT(tmp,
+		FMT_LIT("w = "),
+		FMT_U64(69, .opt = FMT_N_BIN, .digits = 8),
+	); Str a0 = tmp->last.str;
 
+	FMT(tmp,
+		FMT_LIT("w = "),
+		FMT_U64(69, .opt = FMT_N_OCT, .digits = 8),
+	); Str a1 = tmp->last.str;
+
+	FMT(tmp,
+		FMT_LIT("w = "),
+		FMT_U64(69, .opt = FMT_N_DEC, .digits = 8),
+	); Str a2 = tmp->last.str;
+
+	FMT(tmp,
+		FMT_LIT("w = "),
+		FMT_U64(69, .opt = FMT_N_HEX, .digits = 8),
+	); Str a3 = tmp->last.str;
+
+	// u32 const M = (u32)MAX(a0.len, MAX(a1.len, MAX(a2.len, a3.len)));
+	u32 const M = (u32)MAX_U64(a0.len, a1.len, a2.len, a3.len);
+
+	FMT(fmt,
+		FMT_LIT("| "), FMT_STR(a0, .width = M), FMT_LIT(" |\n"),
+		FMT_LIT("| "), FMT_STR(a1, .width = M), FMT_LIT(" |\n"),
+		FMT_LIT("| "), FMT_STR(a2, .width = M), FMT_LIT(" |\n"),
+		FMT_LIT("| "), FMT_STR(a3, .width = M), FMT_LIT(" |\n"),
+	);
+
+	fmt_reset(tmp);
 	fmt_flush_stream(fmt, out);
 
 	// stream_write_arr(out,
