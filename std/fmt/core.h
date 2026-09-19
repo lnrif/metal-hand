@@ -104,8 +104,10 @@ typedef struct {
 
 STATIC_ASSERT(sizeof(FmtArgStrStyle) == 8);
 
+// [str_len] <= [field_len] <= [full_len]
 typedef struct {
 	u64 full_len;
+	u64 field_len;
 	u64 str_len;
 } FmtStrShot;
 
@@ -210,13 +212,13 @@ b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style);
 
 typedef union {
 	union {
-		struct { Str src; FmtStrStyle style; } str;
-		struct { u64 src; FmtNumStyle style; } u64;
-		struct { i64 src; FmtNumStyle style; } i64;
-		struct { u64 src; FmtNumStyle style; } mem;
+		struct { Str src; u8 _pad[0]; FmtStrStyle style; } str;
+		struct { u64 src; u8 _pad[8]; FmtNumStyle style; } u64;
+		struct { i64 src; u8 _pad[8]; FmtNumStyle style; } i64;
+		struct { u64 src; u8 _pad[8]; FmtNumStyle style; } mem;
 	} as;
 	struct {
-		u8 _pad[10 + 6 + 7]; // 67
+		u8 _pad[23];
 		FmtTag tag;
 	};
 } FmtArg;
@@ -259,9 +261,9 @@ static inline FmtArg fmt_arg_mem(u64 src, FmtArgNumStyle style) {
 };
 
 #define FMT_STR(str, style...) fmt_arg_str(str, (FmtArgStrStyle){style})
-#define FMT_U64(u64, style...) fmt_arg_u64(u64, (FmtArgMumStyle){style})
-#define FMT_I64(i64, style...) fmt_arg_i64(i64, (FmtArgMumStyle){style})
-#define FMT_MEM(mem, style...) fmt_arg_mem(mem, (FmtArgMumStyle){style})
+#define FMT_U64(u64, style...) fmt_arg_u64(u64, (FmtArgNumStyle){style})
+#define FMT_I64(i64, style...) fmt_arg_i64(i64, (FmtArgNumStyle){style})
+#define FMT_MEM(mem, style...) fmt_arg_mem(mem, (FmtArgNumStyle){style})
 
 #define FMT_LIT(lit, style...) FMT_STR(S(lit), style)
 

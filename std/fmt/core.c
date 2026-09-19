@@ -105,11 +105,15 @@ FmtStrShot fmt_str_shot(Str src, FmtStrStyle * style) {
 		};
 	};
 
-	u64 full_len = str_len;
-	if (FMT_S_IS_QUOTES(style->opt)) full_len += 2;
+	u64 field_len = str_len;
+	if (FMT_S_IS_QUOTES(style->opt)) field_len += 2;
+	u64 full_len = MAX(field_len, style->width);
 
-	if (full_len < style->width) full_len = style->width;
-	return (FmtStrShot){.full_len = full_len, .str_len = str_len};
+	return (FmtStrShot){
+		.full_len = full_len,
+		.field_len = field_len,
+		.str_len = str_len,
+	};
 };
 
 static void fmt_str_escaped(u8 * write, Str src) {
@@ -148,29 +152,62 @@ b8 fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot)
 	if (!fmt_reserve(out, shot.full_len)) return false;
 
 	u8 * ptr = (u8*)out->ptr + out->pos;
-	u64 const offset = FMT_S_IS_QUOTES(style->opt) ? 1 : 0;
+	u8 * space_lhs; u64 space_lhs_len;
+	u8 * space_rhs; u64 space_rhs_len;
 
-	// TODO: add mid align
-	u8 * space = FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.str_len + offset * 2];
-	u64 spaces_count = shot.full_len - shot.str_len - offset * 2;
-	memset(space, style->fill, spaces_count);
+	switch (FMT_GET_ALIGN(style->opt)) {
+		case FMT_LHS: {
+			space_lhs = 0;
+			space_lhs_len = 0;
+			space_rhs = &ptr[shot.field_len];
+			space_rhs_len = shot.full_len - shot.field_len;
+		}; break;
 
-	u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
+		case FMT_RHS: {
+			space_lhs = &ptr[0];
+			space_lhs_len = shot.full_len - shot.field_len;
+			space_rhs = 0;
+			space_rhs_len = 0;
+		}; break;
 
+		case FMT_MID: {
+			space_lhs = ptr;
+			space_lhs_len = (shot.full_len - shot.field_len) / 2;
+			space_rhs = &ptr[space_lhs_len + shot.field_len];
+			space_rhs_len = shot.full_len - space_lhs_len - shot.field_len;
+		}; break;
+
+		default: PANIC("invalid [align]");
+	};
+
+	u8 * field = &ptr[space_lhs_len];
+
+	// FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
+	// FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.str_len + offset * 2];
+
+	memset(space_lhs, style->fill, space_lhs_len);
+
+	// u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
+
+	u64 i = 0;
 	if (FMT_S_IS_QUOTES(style->opt)) {
-		write[0] = '"'; write += 1;
+		field[i] = '"';
+		i += 1;
 	};
 
 	if (FMT_S_IS_ESCAPE(style->opt)) {
-		fmt_str_escaped(write, src);
+		fmt_str_escaped(field, src);
 	} else {
-		memcpy(write, src.raw, src.len);
+		memcpy(field, src.raw, src.len);
 	};
 
-	write += shot.str_len;
+	i += shot.str_len;
+
+	memset(space_rhs, style->fill, space_rhs_len);
 
 	if (FMT_S_IS_QUOTES(style->opt)) {
-		write[0] = '"'; write += 1;
+		field[i] = '"';
+		field += 1;
 	};
 
 	out->pos += shot.full_len;
@@ -305,7 +342,7 @@ b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style) {
 // |================================================================================================|
 
 b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
-	StrMut str = STR_MUT(fmt->ptr + fmt->pos, 0);
+	u64 pos = fmt->pos;
 
 	for (u64 i = 0; i < len; i += 1) {
 		FmtArg arg = args[i];
@@ -345,9 +382,7 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 		if (!ok) return false;
 	};
 
-	str.len = fmt->pos - (uptr)str.ptr;
-	fmt->last = str;
-
+	fmt->last = STR_MUT(fmt->ptr + pos, fmt->pos - pos);
 	return true;
 };
 
