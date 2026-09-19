@@ -226,4 +226,9 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 #define DIV_CEIL(x, d) _DIV_CEIL(x, d, UNIQ(_urm_div_ceil_))
 #define ALIGN_IS_SANE(x) ((x) != 0 && ((x) & ((x) - 1)) == 0)
 
+u64 max_u64(u64 * ptr, u64 len);
+
+#define MAX_U64_EX(xs...) max_u64(xs, LEN(xs))
+#define MAX_U64(xs...) MAX_U64_EX((u64[]){xs})
+
 #endif // !STD_CORE_H
