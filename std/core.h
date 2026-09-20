@@ -31,6 +31,26 @@
 
 #define LINUX_SYSCALL (LINUX && (X86_64 || AARCH64))
 
+#if defined(__AVX512F__)
+    #define HAS_COMPILE_TIME_AVX512 1
+#elif defined(__AVX2__)
+    #define HAS_COMPILE_TIME_AVX2 1
+#elif defined(__AVX__)
+    #define HAS_COMPILE_TIME_AVX 1
+#else
+    #define HAS_COMPILE_TIME_SSE2 1
+#endif
+
+// #if X86_64
+//     // #include <immintrin.h>
+//     #define SIMD_WIDTH 8
+// #elif AARCH64
+//     #include <arm_neon.h>
+//     #define SIMD_WIDTH 4
+// #else
+//     #error "Unsupported architecture"
+// #endif
+
 // |================================================================================================|
 // |> TYPES                                                                                         |
 // |================================================================================================|

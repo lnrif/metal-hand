@@ -155,9 +155,9 @@ typedef struct {
 	u64 full_len;
 } FmtLayout;
 
-static inline FmtLayout fmt_layout(Fmt * out, u64 field_len, u32 width, u8 align, u8 fill) {
+static inline b8 fmt_layout(Fmt * out, FmtLayout * layout, u64 field_len, u32 width, u8 align, u8 fill) {
 	u64 full_len = field_len > width ? field_len : width;
-	if (!fmt_reserve(out, full_len)) return (FmtLayout){.block = 0, .field = 0, .full_len = 0};
+	if (!fmt_reserve(out, full_len)) return false;
 
 	u8 * ptr = (u8 *)out->ptr + out->pos;
 	u8 * field = ptr;
@@ -190,12 +190,13 @@ static inline FmtLayout fmt_layout(Fmt * out, u64 field_len, u32 width, u8 align
 		if (pad_rhs > 0) memset(&ptr[pad_lhs + field_len], fill, pad_rhs);
 	};
 
-	return (FmtLayout){.block = ptr, .field = field, .full_len = full_len};
+	*layout = (FmtLayout){.block = ptr, .field = field, .full_len = full_len};
+	return true;
 };
 
 b8 fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot) {
-	FmtLayout layout = fmt_layout(out, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
-	if (!layout.block) return false;
+	FmtLayout layout; b8 ok = fmt_layout(out, &layout, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
+	if (!ok) return false;
 
 	u8 * w = layout.field;
 
@@ -319,36 +320,27 @@ FmtNumShot fmt_num_shot(u64 src, b8 neg, FmtNumStyle * style) {
 };
 
 b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot) {
-	if (!fmt_reserve(out, shot.full_len)) return false;
+	u64 content_len = 0;
+	if (neg || FMT_N_IS_SIGN(style->opt)) content_len += 1;
+	if (FMT_N_GET_BASE(style->opt) != 10 && FMT_N_IS_PREFIX(style->opt)) content_len += 2;
+	content_len += shot.digits_len;
 
-	// TODO: add mid align
-	u8 * ptr = (u8 *)out->ptr + out->pos;
-	u8 * space = FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.field_len];
-	memset(space, style->fill, shot.full_len - shot.field_len);
+	FmtLayout layout; b8 ok = fmt_layout(out, &layout, content_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
+	if (!ok) return false;
 
-	u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.field_len] : &ptr[0];
-	u64 w = 0;
+	u8 * w = layout.field;
 
 	if (FMT_N_IS_SIGN(style->opt)) {
-		write[w] = neg ? '-' : (src == 0 ? style->fill : '+'); w += 1;
+		*w++ = neg ? '-' : '+';
 	} else if (neg) {
-		write[w] = '-'; w += 1;
+		*w++ = '-';
 	};
 
 	if (FMT_N_IS_PREFIX(style->opt)) switch (FMT_N_GET_BASE(style->opt)) {
-		case FMT_N_BIN: {
-			write[w] = '0'; w += 1;
-			write[w] = 'b'; w += 1;
-		} break;
-		case FMT_N_OCT: {
-			write[w] = '0'; w += 1;
-			write[w] = 'o'; w += 1;
-		} break;
+		case FMT_N_BIN: *w++ = '0'; *w++ = 'b'; break;
+		case FMT_N_OCT: *w++ = '0'; *w++ = 'o'; break;
+		case FMT_N_HEX: *w++ = '0'; *w++ = 'x'; break;
 		case FMT_N_DEC: break;
-		case FMT_N_HEX: {
-			write[w] = '0'; w += 1;
-			write[w] = 'x'; w += 1;
-		} break;
 	};
 
 	u64 base;
@@ -357,29 +349,95 @@ b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumSh
 		case FMT_N_OCT: base =  8; break;
 		case FMT_N_DEC: base = 10; break;
 		case FMT_N_HEX: base = 16; break;
-	};
+		default: base = 10; break;
+	}
 
-	u8 buf[sizeof(u64) * 8] = {0};
+	u8 buf[72];
 	u8 num_idx = sizeof(buf);
-	u8 const * const table = (u8*)"0123456789ABCDEF";
+	u8 const * const table = (u8 const *)"0123456789ABCDEF";
 
-	for (;;) {
-		num_idx -= 1;
-		buf[num_idx] = table[src % base];
-		src /= base;
-		if (src == 0) break;
-	};
+	u64 temp_src = src;
+	do {
+		num_idx--;
+		buf[num_idx] = table[temp_src % base];
+		temp_src /= base;
+	} while (temp_src > 0);
 
-	u64 const num_len = sizeof(buf) - num_idx;
-	u64 const zeros = shot.digits_len - num_len;
-	memset(&write[w], '0', zeros); w += zeros;
-	memcpy(&write[w], &buf[num_idx], num_len);
+	u64 const actual_num_len = sizeof(buf) - num_idx;
+	u64 const leading_zeros = shot.digits_len > actual_num_len ? (shot.digits_len - actual_num_len) : 0;
 
-	out->pos += shot.full_len;
-	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+	for (u64 i = 0; i < leading_zeros; i++) *w++ = '0';
+
+	memcpy(w, &buf[num_idx], actual_num_len);
+
+	out->pos += layout.full_len;
+	out->last = (StrMut){.raw = layout.block, .len = layout.full_len};
 
 	return true;
 };
+
+// b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot) {
+// 	if (!fmt_reserve(out, shot.full_len)) return false;
+//
+// 	// TODO: add mid align
+// 	u8 * ptr = (u8 *)out->ptr + out->pos;
+// 	u8 * space = FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.field_len];
+// 	memset(space, style->fill, shot.full_len - shot.field_len);
+//
+// 	u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.field_len] : &ptr[0];
+// 	u64 w = 0;
+//
+// 	if (FMT_N_IS_SIGN(style->opt)) {
+// 		write[w] = neg ? '-' : (src == 0 ? style->fill : '+'); w += 1;
+// 	} else if (neg) {
+// 		write[w] = '-'; w += 1;
+// 	};
+//
+// 	if (FMT_N_IS_PREFIX(style->opt)) switch (FMT_N_GET_BASE(style->opt)) {
+// 		case FMT_N_BIN: {
+// 			write[w] = '0'; w += 1;
+// 			write[w] = 'b'; w += 1;
+// 		} break;
+// 		case FMT_N_OCT: {
+// 			write[w] = '0'; w += 1;
+// 			write[w] = 'o'; w += 1;
+// 		} break;
+// 		case FMT_N_DEC: break;
+// 		case FMT_N_HEX: {
+// 			write[w] = '0'; w += 1;
+// 			write[w] = 'x'; w += 1;
+// 		} break;
+// 	};
+//
+// 	u64 base;
+// 	switch (FMT_N_GET_BASE(style->opt)) {
+// 		case FMT_N_BIN: base =  2; break;
+// 		case FMT_N_OCT: base =  8; break;
+// 		case FMT_N_DEC: base = 10; break;
+// 		case FMT_N_HEX: base = 16; break;
+// 	};
+//
+// 	u8 buf[sizeof(u64) * 8] = {0};
+// 	u8 num_idx = sizeof(buf);
+// 	u8 const * const table = (u8*)"0123456789ABCDEF";
+//
+// 	for (;;) {
+// 		num_idx -= 1;
+// 		buf[num_idx] = table[src % base];
+// 		src /= base;
+// 		if (src == 0) break;
+// 	};
+//
+// 	u64 const num_len = sizeof(buf) - num_idx;
+// 	u64 const zeros = shot.digits_len - num_len;
+// 	memset(&write[w], '0', zeros); w += zeros;
+// 	memcpy(&write[w], &buf[num_idx], num_len);
+//
+// 	out->pos += shot.full_len;
+// 	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+//
+// 	return true;
+// };
 
 b8 fmt_num_ex(Fmt * out, u64 src, u8 neg, FmtNumStyle * style) {
 	return fmt_num_write(out, src, neg, style, fmt_num_shot(src, neg, style));
@@ -459,8 +517,8 @@ FmtF64Shot fmt_f64_shot(f64 src, FmtNumStyle * style) {
 };
 
 b8 fmt_f64_write(Fmt * out, f64 src, FmtNumStyle const * style, FmtF64Shot shot) {
-	FmtLayout layout = fmt_layout(out, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
-	if (!layout.block) return false;
+	FmtLayout layout; b8 ok = fmt_layout(out, &layout, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
+	if (!ok) return false;
 
 	u8 * w = layout.field;
 

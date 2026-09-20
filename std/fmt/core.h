@@ -172,7 +172,7 @@ typedef struct {
 	// fill ascii char, by default 0 => ' ' (<space>)
 	u8 fill;
 	// minimal digit count (fill with '0')
-	u8 digits;
+	union { u8 digits; u8 prec; };
 	// by default 0
 	u8 flow;
 	// by default 0 (check [FmtNumOpt])
@@ -428,6 +428,12 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len);
 #define FMT_LOC(flow) \
 	FMT_CYAN, \
 	FMT_LIT("--> "), \
+	FMT_STR(str_z_init(flow.get).str), \
+	FMT_LIT("\n")
+
+#define FMT_LOC_DEBUG(flow) \
+	FMT_CYAN, \
+	FMT_LIT("~~> "), \
 	FMT_STR(str_z_init(flow.get).str), \
 	FMT_LIT("\n")
 
