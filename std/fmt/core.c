@@ -3,6 +3,7 @@
 #include "std/str/core.h"
 #include "std/mem/core.h"
 #include "std/flow/core.h"
+#include "std/fs/core.h"
 
 // |================================================================================================|
 // |> [Fmt]: constructors                                                                        |
@@ -148,73 +149,134 @@ static void fmt_str_escaped(u8 * write, Str src) {
 	};
 };
 
+typedef struct {
+	u8 * block;
+	u8 * field;
+	u64 full_len;
+} FmtLayout;
+
+static inline FmtLayout fmt_layout(Fmt * out, u64 field_len, u32 width, u8 align, u8 fill) {
+	u64 full_len = field_len > width ? field_len : width;
+	if (!fmt_reserve(out, full_len)) return (FmtLayout){.block = 0, .field = 0, .full_len = 0};
+
+	u8 * ptr = (u8 *)out->ptr + out->pos;
+	u8 * field = ptr;
+	u64 pad_total = full_len - field_len;
+
+	if (pad_total > 0) {
+		u64 pad_lhs = 0;
+		u64 pad_rhs = 0;
+
+		switch (align) {
+			case FMT_LHS: {
+				pad_lhs = 0;
+				pad_rhs = pad_total;
+				field = ptr;
+			} break;
+			case FMT_RHS: {
+				pad_lhs = pad_total;
+				pad_rhs = 0;
+				field = &ptr[pad_lhs];
+			} break;
+			case FMT_MID: {
+				pad_lhs = pad_total / 2;
+				pad_rhs = pad_total - pad_lhs;
+				field = &ptr[pad_lhs];
+			} break;
+			default: PANIC("invalid [align] in fmt_layout");
+		};
+
+		if (pad_lhs > 0) memset(ptr, fill, pad_lhs);
+		if (pad_rhs > 0) memset(&ptr[pad_lhs + field_len], fill, pad_rhs);
+	};
+
+	return (FmtLayout){.block = ptr, .field = field, .full_len = full_len};
+};
+
 b8 fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot) {
-	if (!fmt_reserve(out, shot.full_len)) return false;
+	FmtLayout layout = fmt_layout(out, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
+	if (!layout.block) return false;
 
-	u8 * ptr = (u8*)out->ptr + out->pos;
-	u8 * space_lhs; u64 space_lhs_len;
-	u8 * space_rhs; u64 space_rhs_len;
+	u8 * w = layout.field;
 
-	switch (FMT_GET_ALIGN(style->opt)) {
-		case FMT_LHS: {
-			space_lhs = 0;
-			space_lhs_len = 0;
-			space_rhs = &ptr[shot.field_len];
-			space_rhs_len = shot.full_len - shot.field_len;
-		}; break;
-
-		case FMT_RHS: {
-			space_lhs = &ptr[0];
-			space_lhs_len = shot.full_len - shot.field_len;
-			space_rhs = 0;
-			space_rhs_len = 0;
-		}; break;
-
-		case FMT_MID: {
-			space_lhs = ptr;
-			space_lhs_len = (shot.full_len - shot.field_len) / 2;
-			space_rhs = &ptr[space_lhs_len + shot.field_len];
-			space_rhs_len = shot.full_len - space_lhs_len - shot.field_len;
-		}; break;
-
-		default: PANIC("invalid [align]");
-	};
-
-	u8 * field = &ptr[space_lhs_len];
-
-	// FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
-	// FMT_IS_RHS(style->opt) ? &ptr[0] : &ptr[shot.str_len + offset * 2];
-
-	memset(space_lhs, style->fill, space_lhs_len);
-
-	// u8 * write = FMT_IS_RHS(style->opt) ? &ptr[shot.full_len - shot.str_len - offset * 2] : &ptr[0];
-
-	u64 i = 0;
-	if (FMT_S_IS_QUOTES(style->opt)) {
-		field[i] = '"';
-		i += 1;
-	};
+	if (FMT_S_IS_QUOTES(style->opt)) { w[0] = '"'; w += 1; };
 
 	if (FMT_S_IS_ESCAPE(style->opt)) {
-		fmt_str_escaped(field, src);
+		fmt_str_escaped(w, src); 
 	} else {
-		memcpy(field, src.raw, src.len);
-	};
+		memcpy(w, src.raw, src.len);
+	}
 
-	i += shot.str_len;
+	w += shot.str_len;
+	if (FMT_S_IS_QUOTES(style->opt)) { w[0] = '"'; w += 1; };
 
-	memset(space_rhs, style->fill, space_rhs_len);
-
-	if (FMT_S_IS_QUOTES(style->opt)) {
-		field[i] = '"';
-		field += 1;
-	};
-
-	out->pos += shot.full_len;
-	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+	out->pos += layout.full_len;
+	out->last = (StrMut){.raw = layout.block, .len = layout.full_len};
 
 	return true;
 };
+
+// b8 fmt_str_write(Fmt * out, Str src, FmtStrStyle const * style, FmtStrShot shot) {
+// 	if (!fmt_reserve(out, shot.full_len)) return false;
+//
+// 	u8 * ptr = (u8*)out->ptr + out->pos;
+// 	u8 * space_lhs; u64 space_lhs_len;
+// 	u8 * space_rhs; u64 space_rhs_len;
+//
+// 	switch (FMT_GET_ALIGN(style->opt)) {
+// 		case FMT_LHS: {
+// 			space_lhs = 0;
+// 			space_lhs_len = 0;
+// 			space_rhs = &ptr[shot.field_len];
+// 			space_rhs_len = shot.full_len - shot.field_len;
+// 		}; break;
+//
+// 		case FMT_RHS: {
+// 			space_lhs = &ptr[0];
+// 			space_lhs_len = shot.full_len - shot.field_len;
+// 			space_rhs = 0;
+// 			space_rhs_len = 0;
+// 		}; break;
+//
+// 		case FMT_MID: {
+// 			space_lhs = ptr;
+// 			space_lhs_len = (shot.full_len - shot.field_len) / 2;
+// 			space_rhs = &ptr[space_lhs_len + shot.field_len];
+// 			space_rhs_len = shot.full_len - space_lhs_len - shot.field_len;
+// 		}; break;
+//
+// 		default: PANIC("invalid [align]");
+// 	};
+//
+// 	u8 * field = &ptr[space_lhs_len];
+// 	memset(space_lhs, style->fill, space_lhs_len);
+//
+// 	u64 i = 0;
+// 	if (FMT_S_IS_QUOTES(style->opt)) {
+// 		field[i] = '"';
+// 		i += 1;
+// 	};
+//
+// 	if (FMT_S_IS_ESCAPE(style->opt)) {
+// 		fmt_str_escaped(field, src);
+// 	} else {
+// 		memcpy(field, src.raw, src.len);
+// 	};
+//
+// 	i += shot.str_len;
+//
+// 	memset(space_rhs, style->fill, space_rhs_len);
+//
+// 	if (FMT_S_IS_QUOTES(style->opt)) {
+// 		field[i] = '"';
+// 		field += 1;
+// 	};
+//
+// 	out->pos += shot.full_len;
+// 	out->last = (StrMut){.raw = ptr, .len = shot.full_len};
+//
+// 	return true;
+// };
 
 b8 fmt_str_ex(Fmt * out, Str src, FmtStrStyle * style) {
 	return fmt_str_write(out, src, style, fmt_str_shot(src, style));
@@ -338,8 +400,172 @@ b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style) {
 };
 
 // |================================================================================================|
+// |> Number Formatting: f64                                                                        |
+// |================================================================================================|
+
+// |================================================================================================|
+// |> Number Formatting: f64                                                                        |
+// |================================================================================================|
+
+FmtF64Shot fmt_f64_shot(f64 src, FmtNumStyle * style) {
+	if (style->fill == 0) style->fill = ' ';
+
+	union { f64 f; u64 u; } uval = { .f = src };
+	u8 is_neg = (uval.u >> 63) & 1;
+	u8 is_special = 0;
+
+	if ((uval.u & 0x7FF0000000000000) == 0x7FF0000000000000) {
+		is_special = ((uval.u & 0x000FFFFFFFFFFFFF) != 0) ? 1 : 2; // 1 => nan, 2 => inf
+	};
+
+	if (is_special) {
+		u32 field_len = 3;
+		if (is_neg || FMT_N_IS_SIGN(style->opt)) field_len += 1;
+		return (FmtF64Shot){.field_len = field_len, .is_special = is_special, .is_neg = is_neg};
+	};
+
+	f64 abs_val = is_neg ? -src : src;
+	if (abs_val > 18446744073709551615.0) abs_val = 18446744073709551615.0;
+
+	u64 int_part = (u64)abs_val;
+	f64 frac_part = abs_val - (f64)int_part;
+
+	u8 prec = style->digits > 18 ? 18 : style->digits;
+	f64 multiplier = 1.0;
+	for (u8 i = 0; i < prec; ++i) multiplier *= 10.0;
+
+	u64 frac_int = (u64)(frac_part * multiplier + 0.5);
+	if (frac_int >= (u64)multiplier) { int_part += 1; frac_int = 0; };
+
+	u64 temp_int = int_part;
+	u8 int_len = 0;
+	do { int_len += 1; temp_int /= 10; } while (temp_int > 0);
+
+	u8 frac_len = prec;
+	u64 temp_frac = frac_int;
+	if (FMT_N_IS_DROP_ZEROS(style->opt) && frac_len > 0) {
+		while (frac_len > 0 && (temp_frac % 10) == 0) { temp_frac /= 10; frac_len -= 1; };
+	};
+
+	u32 field_len = int_len;
+	if (is_neg || FMT_N_IS_SIGN(style->opt)) field_len += 1;
+	if (frac_len > 0) field_len += 1 + frac_len;
+
+	return (FmtF64Shot){
+		.field_len = field_len,
+		.int_len = int_len, .frac_len = frac_len,
+		.is_special = 0, .is_neg = is_neg,
+	};
+};
+
+b8 fmt_f64_write(Fmt * out, f64 src, FmtNumStyle const * style, FmtF64Shot shot) {
+	FmtLayout layout = fmt_layout(out, shot.field_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
+	if (!layout.block) return false;
+
+	u8 * w = layout.field;
+
+	union { f64 f; u64 u; } uval = { .f = src };
+	u8 is_neg = (uval.u >> 63) & 1;
+	u8 is_special =
+		((uval.u & 0x7FF0000000000000) == 0x7FF0000000000000) 
+		? (((uval.u & 0x000FFFFFFFFFFFFF) != 0) ? 1 : 2) 
+		: 0;
+
+	if (FMT_N_IS_SIGN(style->opt)) {
+		w[0] = is_neg ? '-' : '+'; w += 1;
+	} else if (is_neg) {
+		w[0] = '-'; w += 1;
+	};
+
+	if (is_special == 1) {
+		w[0] = 'n'; w[1] = 'a'; w[2] = 'n'; w += 3;
+	} else if (is_special == 2) {
+		w[0] = 'i'; w[1] = 'n'; w[2] = 'f'; w += 3;
+	} else {
+		f64 abs_val = is_neg ? -src : src;
+		if (abs_val > 18446744073709551615.0) abs_val = 18446744073709551615.0;
+
+		u64 int_part = (u64)abs_val;
+		f64 frac_part = abs_val - (f64)int_part;
+
+		u8 prec = style->digits > 18 ? 18 : style->digits;
+		f64 multiplier = 1.0;
+		for (u8 i = 0; i < prec; ++i) multiplier *= 10.0;
+
+		u64 frac_int = (u64)(frac_part * multiplier + 0.5);
+		if (frac_int >= (u64)multiplier) { int_part += 1; frac_int = 0; };
+
+		u8 ibuf[24];
+		u8 iidx = sizeof(ibuf);
+		u64 temp_int = int_part;
+		do {
+			iidx -= 1;
+			ibuf[iidx] = '0' + (temp_int % 10);
+			temp_int /= 10;
+		} while (temp_int > 0);
+		
+		memcpy(w, &ibuf[iidx], shot.int_len);
+		w += shot.int_len;
+
+		if (shot.frac_len > 0) {
+			w[0] = '.'; w += 1;
+
+			u8 fbuf[24];
+			u8 fidx = sizeof(fbuf);
+			u64 temp_frac = frac_int;
+
+			if (temp_frac > 0) do {
+				fidx -= 1;
+				fbuf[fidx] = '0' + (temp_frac % 10);
+				temp_frac /= 10;
+			} while (temp_frac > 0);
+
+			u64 actual_frac_len = sizeof(fbuf) - fidx;
+			u64 leading_zeros = shot.frac_len > actual_frac_len ? (shot.frac_len - actual_frac_len) : 0;
+
+			for (u64 i = 0; i < leading_zeros; i++) { w[0] = '0'; w += 1; };
+			if (actual_frac_len > 0) memcpy(w, &fbuf[fidx], actual_frac_len);
+		};
+	};
+
+	out->pos += layout.full_len;
+	out->last = (StrMut){.raw = layout.block, .len = layout.full_len};
+
+	return true;
+};
+
+b8 fmt_f64_ex(Fmt * out, f64 src, FmtNumStyle * style) {
+	return fmt_f64_write(out, src, style, fmt_f64_shot(src, style));
+};
+
+// |================================================================================================|
 // |> Arguments Formatting                                                                          |
 // |================================================================================================|
+
+b8 fmt_mem_ex(Fmt * out, u64 src, FmtNumStyle * style) {
+	f64 v; Str s; i8 prec = 1;
+	if (src >= GB(4)) {
+		v = (f64)src / GB(1); s = S("GiB");
+		if (src % GB(1) == 0) prec = 0;
+	} else if (src >= MB(4)) {
+		v = (f64)src / MB(1); s = S("MiB");
+		if (src % MB(1) == 0) prec = 0;
+	} else if (src >= KB(4)) {
+		v = (f64)src / KB(1); s = S("KiB");
+		if (src % KB(1) == 0) prec = 0;
+	} else {
+		v = (f64)src; s = S("B"); prec = 0;
+	};
+
+	Fmt fmt = FMT_ON_STACK(128, out->flow);
+	u32 width = style->width; style->width = 0;
+	UNUSED(prec); // TODO: add f64
+	fmt_u64_ex(&fmt, (u64)v, style);
+	fmt_str_ex(&fmt, s, &(FmtStrStyle){0});
+
+	FmtStrStyle final = (FmtStrStyle){.width = width, .fill = ' '};
+	return fmt_str_ex(out, fmt_as_str(&fmt), &final);
+};
 
 b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 	u64 pos = fmt->pos;
@@ -347,13 +573,6 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 	for (u64 i = 0; i < len; i += 1) {
 		FmtArg arg = args[i];
 		FmtMask flow = 1 << FMT_TAG_FLOW(arg.tag);
-		
-		// fmt_lit(fmt, "[");
-		// fmt_u64(fmt, fmt->flow & 0b11, .opt = FMT_N_BIN | FMT_N_NO_PREFIX, .digits = 2);
-		// fmt_lit(fmt, ":");
-		// fmt_u64(fmt, flow, .opt = FMT_N_BIN | FMT_N_NO_PREFIX, .digits = 2);
-		// fmt_lit(fmt, "]");
-		
 		if ((fmt->flow & flow) != flow) continue;
 
 		b8 ok = true;
@@ -373,9 +592,16 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 				arg.as.i64.src,
 				&arg.as.i64.style
 			); break;
-
-			// case FMT_ARG_MEM:                   result = fmt_virt_mem(fmt, arg.as.mem, arg.opt, NULL);   break;
-			// case FMT_ARG_COLOR: if (fmt->color) result = fmt_virt_str(fmt, arg.as.color, arg.opt, NULL); break;
+			case FMT_TY_F64: ok = fmt_f64_ex(
+				fmt,
+				arg.as.f64.src,
+				&arg.as.f64.style
+			); break;
+			case FMT_TY_MEM: ok = fmt_mem_ex(
+				fmt,
+				arg.as.mem.src,
+				&arg.as.mem.style
+			); break;
 			default: PANIC("invalid [arg.tag]");
 		};
 

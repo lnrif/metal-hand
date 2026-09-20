@@ -5,13 +5,19 @@
 #include "std/mem/reg.h"
 #include "std/str/core.h"
 #include "std/stream/core.h"
-#include "std/fs/core.h"
+// #include "std/fs/core.h"
 
 // |================================================================================================|
 // |> Format State                                                                                  |
 // |================================================================================================|
 
 typedef u32 FmtMask;
+
+#define FMT_SET_TEXT  ((u32)0b01)
+#define FMT_SET_COLOR ((u32)0b10)
+
+#define FMT_FLOW_TEXT  ((u8)0)
+#define FMT_FLOW_COLOR ((u8)1)
 
 typedef struct {
 	REG_EMBED(reg, ptr, any, raw, len);
@@ -59,7 +65,8 @@ typedef enum: u8 {
 	FMT_TY_STR = 0b00000000,
 	FMT_TY_U64 = 0b00000001,
 	FMT_TY_I64 = 0b00000010,
-	FMT_TY_MEM = 0b00000011,
+	FMT_TY_F64 = 0b00000011,
+	FMT_TY_MEM = 0b00000100,
 } FmtTy;
 
 typedef u8 FmtTag;
@@ -142,19 +149,22 @@ typedef enum: u8 {
 	FMT_N_HEX = 0b00001100, FMT_N_BASE = FMT_N_HEX,
 
 	// +1, +0, -0, -1
-	FMT_N_SIGN      = 0b00100000,
+	FMT_N_SIGN       = 0b00010000,
 	// enable: 0b1111, 0o7777, 0xFFFF (default)
-	FMT_N_PREFIX    = 0b00000000,
+	FMT_N_PREFIX     = 0b00000000,
 	// disable:  1111,   7777,   FFFF
-	FMT_N_NO_PREFIX = 0b01000000,
+	FMT_N_NO_PREFIX  = 0b00100000,
 	// [0b]1010_1010, 1_000_000, [0x]FFFF_FFFF
-	FMT_N_PRETTY    = 0b10000000,
+	FMT_N_PRETTY     = 0b01000000,
+	// ...
+	FMT_N_DROP_ZEROS = 0b10000000,
 } FmtNumOpt;
 
-#define FMT_N_GET_BASE(opt)  ((opt) & FMT_N_BASE)
-#define FMT_N_IS_PREFIX(opt) (((opt) & FMT_N_NO_PREFIX) == FMT_N_PREFIX)
-#define FMT_N_IS_SIGN(opt)   (((opt) & FMT_N_SIGN)   == FMT_N_SIGN)
-#define FMT_N_IS_PRETTY(opt) (((opt) & FMT_N_PRETTY) == FMT_N_PRETTY)
+#define FMT_N_GET_BASE(opt)      ((opt) & FMT_N_BASE)
+#define FMT_N_IS_PREFIX(opt)     (((opt) & FMT_N_NO_PREFIX) == FMT_N_PREFIX)
+#define FMT_N_IS_SIGN(opt)       (((opt) & FMT_N_SIGN)   == FMT_N_SIGN)
+#define FMT_N_IS_PRETTY(opt)     (((opt) & FMT_N_PRETTY) == FMT_N_PRETTY)
+#define FMT_N_IS_DROP_ZEROS(opt) (((opt) & FMT_N_DROP_ZEROS) == FMT_N_DROP_ZEROS)
 
 typedef struct {
 	// minimal width
@@ -207,6 +217,19 @@ b8 fmt_i64_ex(Fmt * out, i64 src, FmtNumStyle * style);
 #define fmt_i64(out, src, style...) fmt_i64_ex(out, src, &(FmtNumStyle){style})
 
 // |================================================================================================|
+// |> Number Formatting: f64                                                                        |
+// |================================================================================================|
+
+typedef struct {
+	u32 field_len;
+	u8 int_len; u8 frac_len;
+	// 0 = normal, 1 = nan, 2 = inf
+	u8 is_special; u8 is_neg;
+} FmtF64Shot;
+
+b8 fmt_f64_ex(Fmt * out, f64 src, FmtNumStyle * style);
+
+// |================================================================================================|
 // |> Arguments Formatting                                                                          |
 // |================================================================================================|
 
@@ -215,6 +238,7 @@ typedef union {
 		struct { Str src; u8 _pad[0]; FmtStrStyle style; } str;
 		struct { u64 src; u8 _pad[8]; FmtNumStyle style; } u64;
 		struct { i64 src; u8 _pad[8]; FmtNumStyle style; } i64;
+		struct { f64 src; u8 _pad[8]; FmtNumStyle style; } f64;
 		struct { u64 src; u8 _pad[8]; FmtNumStyle style; } mem;
 	} as;
 	struct {
@@ -256,6 +280,10 @@ static inline FmtArg fmt_arg_i64(i64 src, FmtArgNumStyle style) {
 	return (FmtArg){.as.i64 = {.src = src, .style = fmt_num_style(FMT_TY_I64, style)}};
 };
 
+static inline FmtArg fmt_arg_f64(f64 src, FmtArgNumStyle style) {
+	return (FmtArg){.as.f64 = {.src = src, .style = fmt_num_style(FMT_TY_F64, style)}};
+};
+
 static inline FmtArg fmt_arg_mem(u64 src, FmtArgNumStyle style) {
 	return (FmtArg){.as.mem = {.src = src, .style = fmt_num_style(FMT_TY_MEM, style)}};
 };
@@ -263,9 +291,13 @@ static inline FmtArg fmt_arg_mem(u64 src, FmtArgNumStyle style) {
 #define FMT_STR(str, style...) fmt_arg_str(str, (FmtArgStrStyle){style})
 #define FMT_U64(u64, style...) fmt_arg_u64(u64, (FmtArgNumStyle){style})
 #define FMT_I64(i64, style...) fmt_arg_i64(i64, (FmtArgNumStyle){style})
+#define FMT_F64(f64, style...) fmt_arg_f64(f64, (FmtArgNumStyle){style})
 #define FMT_MEM(mem, style...) fmt_arg_mem(mem, (FmtArgNumStyle){style})
 
 #define FMT_LIT(lit, style...) FMT_STR(S(lit), style)
+#define FMT_REPEAT(lit, count) FMT_LIT("", .fill = (lit), .width = (count))
+
+#define FMT_COLOR(str) FMT_STR(str, .flow = FMT_FLOW_COLOR)
 
 b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len);
 
@@ -273,58 +305,130 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len);
 #define FMT(fmt, args...) FMT_EX(fmt, (FmtArg[]){args})
 
 // |================================================================================================|
-// |> ANSI colors                                                                                   |
+// |> ANSI                                                                                          |
 // |================================================================================================|
 
-#define ANSI_BOLD       "\x1B[1m"
-#define ANSI_BOLD_RESET "\x1B[22m"
+#define ANSI_BOLD         "\x1B[1m"
+#define ANSI_FAINT        "\x1B[2m"
+#define ANSI_ITALIC       "\x1B[3m"
+#define ANSI_UNDERLINE    "\x1B[4m"
+#define ANSI_BLINK        "\x1B[5m"
+#define ANSI_REV          "\x1B[7m"
+#define ANSI_INVISIBLE    "\x1B[8m"
 
-#define ANSI_BLACK   "\x1B[30m"
-#define ANSI_RED     "\x1B[31m"
-#define ANSI_GREEN   "\x1B[32m"
-#define ANSI_YELLOW  "\x1B[33m"
-#define ANSI_BLUE    "\x1B[34m"
-#define ANSI_MAGENTA "\x1B[35m"
-#define ANSI_CYAN    "\x1B[36m"
-#define ANSI_WHITE   "\x1B[37m"
+#define ANSI_BOLD_RESET   "\x1B[22m"
+#define ANSI_ITALIC_RESET "\x1B[23m"
+#define ANSI_UNDER_RESET  "\x1B[24m"
+#define ANSI_BLINK_RESET  "\x1B[25m"
+#define ANSI_REV_RESET    "\x1B[27m"
+#define ANSI_RESET        "\x1B[m"
 
-#define ANSI_8B(n)        "\x1B[38;5;" n "m"
-#define ANSI_24B(r, g, b) "\x1B[38;2;" r ";" g ";" b "m"
+#define ANSI_FG_RESET "\x1B[39m"
+#define ANSI_BG_RESET "\x1B[49m"
+#define ANSI_RESET    "\x1B[m"
 
-#define ANSI_FG_RESET   "\x1B[39m"
-#define ANSI_RESET      "\x1B[m" // "\x1B[0m"
+#define ANSI_BLACK        "\x1B[30m"
+#define ANSI_RED          "\x1B[31m"
+#define ANSI_GREEN        "\x1B[32m"
+#define ANSI_YELLOW       "\x1B[33m"
+#define ANSI_BLUE         "\x1B[34m"
+#define ANSI_MAGENTA      "\x1B[35m"
+#define ANSI_CYAN         "\x1B[36m"
+#define ANSI_WHITE        "\x1B[37m"
+
+#define ANSI_BRIGHT_BLACK   "\x1B[90m"
+#define ANSI_BRIGHT_RED     "\x1B[91m"
+#define ANSI_BRIGHT_GREEN   "\x1B[92m"
+#define ANSI_BRIGHT_YELLOW  "\x1B[93m"
+#define ANSI_BRIGHT_BLUE    "\x1B[94m"
+#define ANSI_BRIGHT_MAGENTA "\x1B[95m"
+#define ANSI_BRIGHT_CYAN    "\x1B[96m"
+#define ANSI_BRIGHT_WHITE   "\x1B[97m"
+
+#define ANSI_BG_BLACK     "\x1B[40m"
+#define ANSI_BG_RED       "\x1B[41m"
+#define ANSI_BG_GREEN     "\x1B[42m"
+#define ANSI_BG_YELLOW    "\x1B[43m"
+#define ANSI_BG_BLUE      "\x1B[44m"
+#define ANSI_BG_MAGENTA   "\x1B[45m"
+#define ANSI_BG_CYAN      "\x1B[46m"
+#define ANSI_BG_WHITE     "\x1B[47m"
+
+#define ANSI_BG_BRIGHT_BLACK   "\x1B[100m"
+#define ANSI_BG_BRIGHT_RED     "\x1B[101m"
+#define ANSI_BG_BRIGHT_GREEN   "\x1B[102m"
+#define ANSI_BG_BRIGHT_YELLOW  "\x1B[103m"
+#define ANSI_BG_BRIGHT_BLUE    "\x1B[104m"
+#define ANSI_BG_BRIGHT_MAGENTA "\x1B[105m"
+#define ANSI_BG_BRIGHT_CYAN    "\x1B[106m"
+#define ANSI_BG_BRIGHT_WHITE   "\x1B[107m"
 
 // |================================================================================================|
-// |> TRASH                                                                                         |
+// |> [Fmt]: ANSI                                                                                   |
+// |================================================================================================|
 
-// StrMut bump_raw_lit_ex(BumpRaw * bump, Str str);
-// #define bump_raw_lit(bump, lit) bump_raw_lit_ex(bump, S(lit))
-//
-// StrMut bump_gen_lit_ex(Bump * bump, Str str);
-// #define bump_gen_lit(bump, lit) bump_lit_ex(bump, S(lit))
-//
-// StrMut bump_raw_str_ex(BumpRaw * bump, Str str, FmtStr fmt);
-// #define bump_raw_str(bump, str, fmt...) bump_raw_str_ex(bump, str, (FmtStr){fmt})
-//
-// StrMut bump_raw_num_ex(BumpRaw * bump, b8 neg, u64 num, FmtNum fmt);
-// #define bump_raw_num(bump, neg, num, fmt...) bump_raw_num_ex(bump, neg, num, (FmtNum){fmt})
-//
-// #define bump_raw_u64_ex(bump, num, fmt...) bump_raw_num_ex(bump, false, num, fmt)
-// #define bump_raw_u64(bump, num, fmt...) bump_raw_u64_ex(bump, false, num, (FmtNum){fmt})
-//
-// StrMut bump_raw_i64_ex(BumpRaw * bump, i64 num, FmtNum fmt);
-// #define bump_raw_i64(bump, num, fmt...) bump_raw_i64_ex(bump, num, (FmtNum){fmt})
-//
-// StrMut bump_str_ex(Bump * bump, Str str, FmtStr fmt);
-// #define bump_str(bump, str, fmt...)      bump_str_ex(bump, str, (FmtStr){fmt})
-//
-// StrMut bump_num_ex(Bump * bump, u64 num, b8 neg, FmtNum fmt);
-// #define bump_num(bump, num, neg, fmt...) bump_num_ex(bump, num, neg, (FmtNum){fmt})
-//
-// #define bump_u64_ex(bump, num, fmt...)   bump_num_ex(bump, num, false, fmt)
-// #define bump_u64(bump, num, fmt...)      bump_u64_ex(bump, num, false, (FmtNum){fmt})
-//
-// StrMut bump_i64_ex(Bump * bump, i64 num, FmtNum fmt);
-// #define bump_i64(bump, num, fmt...) bump_i64_ex(bump, num, (FmtNum){fmt})
+#define FMT_BOLD         FMT_COLOR(S(ANSI_BOLD))
+#define FMT_FAINT        FMT_COLOR(S(ANSI_FAINT))
+#define FMT_ITALIC       FMT_COLOR(S(ANSI_ITALIC))
+#define FMT_UNDERLINE    FMT_COLOR(S(ANSI_UNDERLINE))
+#define FMT_BLINK        FMT_COLOR(S(ANSI_BLINK))
+#define FMT_REVERSE      FMT_COLOR(S(ANSI_REVERSE))
+#define FMT_INVISIBLE    FMT_COLOR(S(ANSI_INVISIBLE))
+
+#define FMT_BOLD_RESET   FMT_COLOR(S(ANSI_BOLD_RESET))
+#define FMT_ITALIC_RESET FMT_COLOR(S(ANSI_ITALIC_RESET))
+#define FMT_UNDER_RESET  FMT_COLOR(S(ANSI_UNDER_RESET))
+#define FMT_BLINK_RESET  FMT_COLOR(S(ANSI_BLINK_RESET))
+#define FMT_REV_RESET    FMT_COLOR(S(ANSI_REV_RESET))
+#define FMT_RESET        FMT_COLOR(S(ANSI_RESET))
+
+#define FMT_FG_RESET FMT_COLOR(S(ANSI_FG_RESET))
+#define FMT_BG_RESET FMT_COLOR(S(ANSI_BG_RESET))
+#define FMT_RESET    FMT_COLOR(S(ANSI_RESET))
+
+#define FMT_BLACK        FMT_COLOR(S(ANSI_BLACK))
+#define FMT_RED          FMT_COLOR(S(ANSI_RED))
+#define FMT_GREEN        FMT_COLOR(S(ANSI_GREEN))
+#define FMT_YELLOW       FMT_COLOR(S(ANSI_YELLOW))
+#define FMT_BLUE         FMT_COLOR(S(ANSI_BLUE))
+#define FMT_MAGENTA      FMT_COLOR(S(ANSI_MAGENTA))
+#define FMT_CYAN         FMT_COLOR(S(ANSI_CYAN))
+#define FMT_WHITE        FMT_COLOR(S(ANSI_WHITE))
+
+#define FMT_BRIGHT_BLACK   FMT_COLOR(S(ANSI_BRIGHT_BLACK))
+#define FMT_BRIGHT_RED     FMT_COLOR(S(ANSI_BRIGHT_RED))
+#define FMT_BRIGHT_GREEN   FMT_COLOR(S(ANSI_BRIGHT_GREEN))
+#define FMT_BRIGHT_YELLOW  FMT_COLOR(S(ANSI_BRIGHT_YELLOW))
+#define FMT_BRIGHT_BLUE    FMT_COLOR(S(ANSI_BRIGHT_BLUE))
+#define FMT_BRIGHT_MAGENTA FMT_COLOR(S(ANSI_BRIGHT_MAGENTA))
+#define FMT_BRIGHT_CYAN    FMT_COLOR(S(ANSI_BRIGHT_CYAN))
+#define FMT_BRIGHT_WHITE   FMT_COLOR(S(ANSI_BRIGHT_WHITE))
+
+#define FMT_BG_BLACK     FMT_COLOR(S(ANSI_BG_BLACK))
+#define FMT_BG_RED       FMT_COLOR(S(ANSI_BG_RED))
+#define FMT_BG_GREEN     FMT_COLOR(S(ANSI_BG_GREEN))
+#define FMT_BG_YELLOW    FMT_COLOR(S(ANSI_BG_YELLOW))
+#define FMT_BG_BLUE      FMT_COLOR(S(ANSI_BG_BLUE))
+#define FMT_BG_MAGENTA   FMT_COLOR(S(ANSI_BG_MAGENTA))
+#define FMT_BG_CYAN      FMT_COLOR(S(ANSI_BG_CYAN))
+#define FMT_BG_WHITE     FMT_COLOR(S(ANSI_BG_WHITE))
+
+#define FMT_BG_BRIGHT_BLACK   FMT_COLOR(S(ANSI_BG_BRIGHT_BLACK))
+#define FMT_BG_BRIGHT_RED     FMT_COLOR(S(ANSI_BG_BRIGHT_RED))
+#define FMT_BG_BRIGHT_GREEN   FMT_COLOR(S(ANSI_BG_BRIGHT_GREEN))
+#define FMT_BG_BRIGHT_YELLOW  FMT_COLOR(S(ANSI_BG_BRIGHT_YELLOW))
+#define FMT_BG_BRIGHT_BLUE    FMT_COLOR(S(ANSI_BG_BRIGHT_BLUE))
+#define FMT_BG_BRIGHT_MAGENTA FMT_COLOR(S(ANSI_BG_BRIGHT_MAGENTA))
+#define FMT_BG_BRIGHT_CYAN    FMT_COLOR(S(ANSI_BG_BRIGHT_CYAN))
+#define FMT_BG_BRIGHT_WHITE   FMT_COLOR(S(ANSI_BG_BRIGHT_WHITE))
+
+#define FMT_GREY   FMT_BRIGHT_BLACK
+#define FMT_ORANGE FMT_COLOR(S("\x1B[38;5;208m"))
+
+#define FMT_LOC(flow) \
+	FMT_CYAN, \
+	FMT_LIT("--> "), \
+	FMT_STR(str_z_init(flow.get).str), \
+	FMT_LIT("\n")
 
 #endif // !STD_FMT_CORE_H

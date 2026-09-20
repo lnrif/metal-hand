@@ -13,8 +13,14 @@ typedef struct {
 	u8 const * const * ptr;
 	u32 pos;
 	u32 len;
-	StrZ peek;
+	Str peek;
 } Args;
+
+#define ARG_PEEK_EMBED(args, _pad, peek) \
+	union { \
+		Args args; \
+		struct { u8 _pad[8 + 4 + 4]; Str peek; };\
+	}
 
 #elif defined(_WIN32)
 // |================================================================================================|
@@ -30,9 +36,11 @@ typedef struct {
 
 Args arg_init(Run const * run);
 
-StrZ arg_peek(Args * arg);
-StrZ arg_next(Args * arg);
+// Str arg_peek(Args * args);
+Str arg_next(Args * args);
+#define arg_skip(args) UNUSED(arg_next(args))
+#define arg_peek(args) ((args)->peek)
 
-b8 arg_eof(Args * arg);
+b8 arg_eof(Args * args);
 
 #endif // !STD_RUN_ARGS_H

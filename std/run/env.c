@@ -45,7 +45,7 @@ EnvArg env_next(Env * restrict env) {
 };
 
 b8 env_eof(Env const * restrict env) {
-	return str_is_nil(&env->peek.full);
+	return str_nil(env->peek.full);
 };
 
 #elif defined(_WIN32)

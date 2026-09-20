@@ -9,30 +9,30 @@ Args arg_init(Run const * restrict run) {
 	Args arg = (Args){
 		.ptr = run->args, .pos = 0,
 		.len = run->args_len,
-		.peek = STR_Z_NIL,
+		.peek = STR_NIL,
 	}; arg_next(&arg);
 	return arg;
 };
 
-StrZ arg_peek(Args * restrict arg) {
-	return arg->peek;
-};
+// Str arg_peek(Args * restrict arg) {
+// 	return arg->peek.str;
+// };
 
-StrZ arg_next(Args * restrict arg) {
-	StrZ const peek = arg->peek;
+Str arg_next(Args * restrict arg) {
+	Str const peek = arg->peek;
 
 	if (arg->pos < arg->len) {
-		arg->peek = str_z_init(arg->ptr[arg->pos]);
+		arg->peek = str_z_init(arg->ptr[arg->pos]).str;
 		arg->pos += 1;
 	} else {
-		arg->peek = STR_Z_NIL;
+		arg->peek = STR_NIL;
 	};
 
 	return peek;
 };
 
 b8 arg_eof(Args * restrict arg) {
-	return str_is_nil(&arg->peek);
+	return str_nil(arg->peek);
 };
 
 #elif defined(_WIN32)

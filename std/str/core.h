@@ -36,15 +36,33 @@ typedef Str StrOpt;
 u8 * str_find_byte(Str s, u8 b);
 
 // |================================================================================================|
+// |> [Str]: index                                                                                  |
+
+u8  str_idx(Str x, u64 i);
+Str str_cut(Str x, u64 s, u64 e);
+Str str_sub(Str x, u64 s, u64 e);
+
+// |================================================================================================|
 // |> [Str]: comparision                                                                            |
 
 b8 str_eq(Str a, Str b);
 #define str_eq_lit(x, lit) str_eq(x, S(lit))
 
+i32 str_cmp(Str a, Str b);
+Str str_pos(Str a, Str b);
+b8  str_beg(Str a, Str b);
+b8  str_end(Str a, Str b);
+
+#define str_cmp_lit(x, lit) str_cmp(x, S(lit))
+#define str_pos_lit(x, lit) str_pos(x, S(lit))
+#define str_beg_lit(x, lit) str_beg(x, S(lit))
+#define str_end_lit(x, lit) str_end(x, S(lit))
+
 // |================================================================================================|
 // |> [Str]: properties                                                                             |
 
-#define str_is_nil(x) ((x)->ptr == 0)
+#define str_nil(x)  ((x).ptr == 0)
+#define str_sane(x) ((x).ptr != 0)
 
 // |================================================================================================|
 // |> C-STRING                                                                                      |
