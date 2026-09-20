@@ -4,6 +4,7 @@
 #include "std/flow/core.h"
 #include "std/fmt/core.h"
 #include "std/str/core.h"
+#include "std/run/arg.h"
 
 ////////////////////////////////
 // commands
@@ -34,12 +35,7 @@ typedef struct {
 	ArgsCmdKind kind;
 } ArgsCmd;
 
-b8 args_handle(
-	Fmt * out,
-	ArgsCmd * cmd,
-	u8 const * const * ptr,
-	u32 count
-);
+b8 args_handle(Fmt * out, ArgsCmd * cmd, Args args);
 
 ////////////////////////////////////////////////////////////////
 // internal
@@ -49,18 +45,22 @@ b8 args_handle(
 
 typedef struct {
 	Fmt * out; StrOpt cmd;
-	StrZ compiler, peek;
-
-	u8 const * const * ptr;
-	u32 len; u32 at;
-
+	Str compiler; ARG_PEEK_EMBED(args, _pad, peek);
 	b8 color;
 	b8 help;
 } ArgsState;
 
-ArgsState args_state_init(Fmt * out, u8 const * const * ptr, u32 count);
-void args_state_skip(ArgsState * state);
-b8 args_state_eof(ArgsState const * state);
+// Str peek;
+// peek = arg_peek(&state->args);
+//
+// str_beg(peek, S("--help"))
+//
+// arg_skip(&state->args);
+// Str peek = arg_peek(&state->args);
+//
+// str_beg(peek, S("--help"))
+
+ArgsState args_state_init(Fmt * out, Args args);
 
 typedef enum: u8 {
 	ARGS_UNKNOWN = false,
@@ -73,7 +73,7 @@ typedef enum: u8 {
 		case ARGS_UNKNOWN: break; \
 		case ARGS_KNOWN: continue; \
 		case ARGS_ERROR: return false; \
-	};
+	}
 
 ArgsResult args_skip_flag_try(ArgsState * state);
 

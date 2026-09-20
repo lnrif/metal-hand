@@ -522,7 +522,6 @@ b8 fmt_f64_write(Fmt * out, f64 src, FmtNumStyle const * style, FmtF64Shot shot)
 
 			u64 actual_frac_len = sizeof(fbuf) - fidx;
 			u64 leading_zeros = shot.frac_len > actual_frac_len ? (shot.frac_len - actual_frac_len) : 0;
-
 			for (u64 i = 0; i < leading_zeros; i++) { w[0] = '0'; w += 1; };
 			if (actual_frac_len > 0) memcpy(w, &fbuf[fidx], actual_frac_len);
 		};
