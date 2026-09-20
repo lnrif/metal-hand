@@ -1,0 +1,122 @@
+IdentPool := struct {
+	rs: Buf,
+	bs: &[.]Bucket,
+	vs: &[.]Value,
+};
+
+# buf'mut: [256:0]u8 = u8.[0] ** 256;
+
+Vec := type {
+	@call := (T: type) -> struct :: {
+		V := struct {
+			ptr: usz,
+			len: usz,
+			cap: usz,
+
+			get <~ @slice(ptr, len),
+			mem <~ @slice(ptr, cap),
+		};
+
+		V <| type { @index := get; @slice := get; };
+
+		ret V;
+	};
+};
+
+Bytes := Vec(
+	T: u8,
+	reserve: 32 << 10,
+	mode: .virt(32 << 10),
+);
+
+vec ~ u8.[0] ** 256;
+
+Vec '= type {
+	@call '= (T: type) -> struct :: {
+		V '= struct {
+			ptr: uptr;
+			len: usz;
+			cap: usz;
+
+			get ~ @slice(ptr, get);
+			raw ~ @slice(ptr, cap);
+		};
+
+		Indexable '= enum {
+			index(usz),
+			range([..<]usz),
+		};
+
+		V <| impl {
+			@index '= (&'_ self, i: Indexable) -> _ :: self.get[i];
+			@slice '= (&'_ self) -> _ :: self.get;
+		};
+
+		ret V;
+	};
+};
+
+
+
+if !vec.push(69) ret false;
+vec[]
+
+IdentPool <| type {
+	Buf '= struct {
+		ptr: &[len]u8,
+		len: usz,
+		cap: usz,
+	};
+
+	Bucket '= struct {
+		hash: u64 = .MAX,
+		pos:  u32 = .MAX,
+		id:   ?Id = null,
+	};
+
+	Value '= struct {
+		pos: u32,
+		len: u32,
+	};
+};
+
+IdentPool <| type {
+	Id := enum(u32) { ..., null = u32.MAX };
+};
+
+IdentPool <| type {
+	eval_hash := (str: &[]u8) -> u64 :: ...;
+};
+
+xyz'mut = 10;
+
+IdentPool <| type {
+	add := (&'mut self, str: &[]u8) -> Id :: {
+		hash := eval_hash(str);
+		...
+	};
+};
+
+IdentPool <| @run {
+	pool'mut := IdentPool.init();
+
+	Ext'mut := type();
+
+	Ext <| {
+		STRUCT := pool.add("struct");
+		UNION  := pool.add("union");
+		ENUM   := pool.add("enum");
+	};
+
+	Ext <| {
+		INIT := IdentPool {
+			rs: @mem(pool.rs),
+			bs: @mem(pool.bs),
+			vs: @mem(pool.vs),
+		};
+	};
+
+	ret Ext;
+};
+
+

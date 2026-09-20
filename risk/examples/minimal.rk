@@ -1,0 +1,2 @@
+std := @load("std");
+main := () -> () :: std.print("hello, world!\");

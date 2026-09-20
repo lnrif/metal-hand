@@ -1,0 +1,31 @@
+| Vec := (T: type, count: usz) -> type :: {
+	if count == 2 ret struct {x: T, y: T};
+	if count == 3 ret struct {x: T, y: T, z: T};
+	if count == 4 ret struct {x: T, y: T, z: T, w: T};
+	@panic();
+};
+
+| Rot := (T: type, dims: usz) -> type :: {
+	ret dims match {
+		2 => struct {a: T, b01: T},
+		3 => struct {a: T, b01: T, b12: T, b20: T},
+		_ => @panic(),
+	};
+};
+
+| V3 := Vec(f32, 3);
+| R3 := Rot(f32, 3);
+
+a: V3 = ???;
+b: V3 = ???;
+r := R3(a, b);
+
+v: V3 = ???;
+w := r.rot(v);
+
+w := ...;
+w '= ...;
+
+w'n = ...;
+w: n = ...;
+

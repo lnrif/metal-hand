@@ -13,12 +13,12 @@ void run(Run run) { UNUSED(run);
 	if (!stream_is_terminal(out)) proc_exit(255);
 
 	if (!stream_enable_ansi(out)) {
-		stream_write_lit(out, "[risk:fatal] failed to enable ANSI in console\n\n");
+		stream_write_lit(out, "[f] failed to enable ANSI in console\n\n");
 		proc_exit(255);
 	};
 
 	if (!term_enable_utf8()) {
-		stream_write_lit(out, "[risk:fatal] failed to enable UTF-8 in console\n\n");
+		stream_write_lit(out, "[f] failed to enable UTF-8 in console\n\n");
 		proc_exit(255);
 	};
 
@@ -28,7 +28,7 @@ void run(Run run) { UNUSED(run);
 	Pages fmt_pages = pages_reserve(MB(16));
 	if (!fmt_pages.is_valid) {
 		stream_write_lit(out,
-			ANSI_BOLD ANSI_RED "[risk:fatal] "
+			ANSI_BOLD ANSI_RED "[f] "
 			ANSI_WHITE "failed to reserve pages for formatter" "\n"
 			ANSI_RESET
 		);
@@ -40,7 +40,7 @@ void run(Run run) { UNUSED(run);
 	// Pages tmp_pages = pages_reserve(MB(16));
 	// if (!tmp_pages.is_valid) {
 	// 	stream_write_lit(out,
-	// 		ANSI_BOLD ANSI_RED "[risk:fatal] "
+	// 		ANSI_BOLD ANSI_RED "[f] "
 	// 		ANSI_WHITE "failed to reserve pages for formatter" "\n"
 	// 		ANSI_RESET
 	// 	);
@@ -55,7 +55,7 @@ void run(Run run) { UNUSED(run);
 	// Pages paths_pages = pages_reserve(MB(16));
 	// if (!paths_pages.is_valid) {
 	// 	stream_write_lit(out,
-	// 		ANSI_BOLD ANSI_RED "[risk:fatal] "
+	// 		ANSI_BOLD ANSI_RED "[f] "
 	// 		ANSI_WHITE "failed to reserve pages for paths pool" "\n"
 	// 		ANSI_RESET
 	// 	);
@@ -68,93 +68,40 @@ void run(Run run) { UNUSED(run);
 	// |> hello                                                                                         |
 
 
-	// ArgsCmd cmd = {0}; {
-	// 	Args args = arg_init(&run);
-	// 	if (!args_handle(fmt, &cmd, args)) goto err;
-	// 	fmt_flush_stream(fmt, out);
-	// };
+	ArgsCmd cmd = {0}; {
+		Args args = arg_init(&run);
+		if (!args_handle(fmt, &cmd, args)) goto err;
+		fmt_flush_stream(fmt, out);
+	};
 
-	u8 const digits = 2;
-	FMT(fmt,
-		FMT_BOLD,
-		FMT_YELLOW, FMT_LIT("[["),
-		FMT_RED, FMT_F64(+0.124, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.235, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.346, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.457, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.568, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT("],"), FMT_LIT("\n"),
-	);
-
-	FMT(fmt,
-		FMT_BOLD,
-		FMT_YELLOW, FMT_LIT(" ["),
-		FMT_RED, FMT_F64(+0.124, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.235, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.346, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.457, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.568, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT("],"), FMT_LIT("\n"),
-	);
-
-	FMT(fmt,
-		FMT_BOLD,
-		FMT_YELLOW, FMT_LIT(" ["),
-		FMT_RED, FMT_F64(+0.124, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.235, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.346, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.457, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.568, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT("],"), FMT_LIT("\n"),
-	);
-
-	FMT(fmt,
-		FMT_BOLD,
-		FMT_YELLOW, FMT_LIT(" ["),
-		FMT_RED, FMT_F64(+0.124, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.235, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.346, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.457, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.568, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT("],"), FMT_LIT("\n"),
-	);
-
-	FMT(fmt,
-		FMT_BOLD,
-		FMT_YELLOW, FMT_LIT(" ["),
-		FMT_BLUE, FMT_F64(-0.124, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_BLUE, FMT_F64(-0.235, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.346, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.457, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT(", "),
-		FMT_RED, FMT_F64(+0.568, .digits = digits, .opt = FMT_N_SIGN),
-		FMT_YELLOW, FMT_LIT("]]"), FMT_LIT("\n"),
-	);
+	switch (cmd.kind) {
+		case ARGS_CMD_NONE: proc_exit(0); break;
+		case ARGS_CMD_BUILD: {
+			FMT(fmt,
+				FMT_BOLD, FMT_LIT("\n"),
+				FMT_RED, FMT_LIT("[e] "),
+				FMT_WHITE, FMT_LIT("command 'build' is not implemented, sorry"), FMT_LIT("\n"),
+				FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+				FMT_LIT("\n"), FMT_RESET,
+			);
+		} break;
+		case ARGS_CMD_RUN: {
+			FMT(fmt,
+				FMT_BOLD,
+				FMT_RED, FMT_LIT("[e] "),
+				FMT_WHITE, FMT_LIT("command 'run' is not implemented, sorry"), FMT_LIT("\n"),
+				FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+				FMT_RESET,
+			);
+		} break;
+		default: PANIC("invalid kind [cmd.kind]");
+	};
 
 // ok:
 	fmt_flush_stream(fmt, out);
 	proc_exit(0);
 
-// err:
+err:
 	fmt_flush_stream(fmt, out);
 	proc_exit(1);
 };

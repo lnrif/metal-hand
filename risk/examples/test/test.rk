@@ -1,0 +1,135 @@
+Bump <| struct {
+	v[beg, pos, end]: [uptr] ** 3,
+};
+
+Dot2 <| struct { v[x,y  ]: [f64] ** 2 };
+Dot3 <| struct { v[x,y,z]: [f64] ** 3 };
+
+Vec2 <| Dot2;
+Vec3 <| Dot3;
+
+Dot3 <| module {
+	#add <| add;
+	#sub <| sub;
+	#mul <| scale;
+
+	|> add := (a: Dot3, b: Dot3) => Dot3 {
+		.x = a.x + b.x,
+		.y = a.y + b.y,
+		.z = a.z + b.z,
+	};
+
+	|> sub := (a: Dot3, b: Dot3) => Dot3 {
+		:x = a.x - b.x,
+		:y = a.y - b.y,
+		:z = a.z - b.z,
+	};
+
+
+	|> scale := (d: Dot3, s: f64) => Dot3 {
+		:x = d.x * s,
+		:y = d.y * s,
+		:z = d.z * s,
+	};
+
+
+	|> mul_wise := (a: Dot3, b: Dot3) => Dot3 {
+		:x = a.x * b.x,
+		:y = a.y * b.y,
+		:z = a.z * b.z,
+	};
+
+	|> #sub := (a: Dot3, b: Dot3) => Dot3 {
+		:x = a.x - b.x,
+		:y = a.y - b.y,
+		:z = a.z - b.z,
+	};
+
+	|> dot := (a: Dot3, b: Dot3) -> f64 ::
+		a.x * b.x + a.y * b.y + a.z * b.z;
+
+	|> wise := (a: Dot3, b: Dot3) => Dot3 {
+		:x = a.x * b.x,
+		:y = a.y * b.y,
+		:z = a.z * b.z,
+	};
+};
+
+
+:Rot2 := struct { a01: f64, s: f64 };
+:Rot3 := struct { a01: f64, a12: f64, a20: f64, s: f64 };
+
+:add := (a: f64, b: f64) -> f64 :: a + b;
+
+<|Nums := Vec(
+	:T = f64,
+	:align = 64,
+	:local_count = :align / @sizeof(:T) - @sizeof(Vec.Head),
+);
+
+<|Block := struct {
+	ptr: uptr.mut,
+	len: u48,
+};
+
+<|Mode := enum { fixed, grow_up, grow_down };
+
+<|Tag := enum { |E|
+	:Tag := u8;
+
+	:Item := struct { |I|
+		.name = &[u8],
+		.tag = :Tag,
+	};
+};
+
+tag: Tag = .eof;
+
+if tag {
+	.ill then ...;
+	.eof then ...;
+	else ...;
+};
+
+
+Player := struct { |T|
+	T.repr = u64;
+
+	health: f32 = 100.0,
+	damage: f32 =  10.0,
+};
+
+player := Player { :health = 100.0, :damage = 28.0 };
+
+E := enum (:Tag = u8, :align = 4) { a, b, c, d };
+
+f := (a: u32, e: E) -> () :: ();
+
+
+
+f( |f|
+	f.a = 0,
+	f.e = f.a,
+);
+
+:alloc_fn := (
+	ctx: uptr.mut,
+	prev: Block,
+	len: u48,
+	align: u24,
+	mode: Mode,
+) -> struct {
+	ptr: uptr,
+	len: u48,
+} :: {
+	;; ...
+};
+
+UptrMut := struct {
+	#use ptr: usz,
+	#comptime mut: bool,
+};
+
+
+
+.mod := module {};

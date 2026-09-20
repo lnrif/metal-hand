@@ -1,0 +1,50 @@
+Atom := enum {
+	tree { t: Tree },
+	token { t: Token },
+};
+
+Tree := struct {
+	len: u32,
+	tag: Tree.Tag,
+};
+
+Block := struct { ptr: uptr, len: usz };
+
+reserve := func(len: u64) -> Block :: {}; 
+
+mod[Tree] {
+	Tag := enum(
+		:like = u8,
+	) {
+		# '(...)'
+		paren,
+		# '{...}'
+		brace,
+		# '[...]'
+		brack,
+	};
+};
+
+Token := struct {
+	pos: u32,
+	len: u24,
+	tag: Token.Tag,
+};
+
+mod[Token] {
+	Tag := enum(
+		:like = u8,
+	) {
+		eof,
+		number,
+		ident,
+		plus,
+		minus,
+		star,
+		slash,
+	};
+};
+
+Vec = struct { ptr: uptr };
+
+

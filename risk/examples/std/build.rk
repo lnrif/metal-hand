@@ -1,0 +1,11 @@
+#!/home/uxem/ideas/risk/build/risk run
+
+<| @load("compiler.rk").{Space, Source};
+
+@run {
+	space'mut := Space.init(name: "main", limit: 2 << 30);
+	
+	program := space.frontend_or_halt("main.rk");
+	entry   := program.get("entry", () -> !ret);
+};
+

@@ -1,0 +1,111 @@
+std' = @mod("std.rk");
+
+@entry {
+	std.print("Hello World");
+	std.exit();
+};
+
+@run {
+	@assert(1 + 1 == 2, "broken math");
+};
+
+Trit := enum(i2) {
+	n = -1,
+	z =  0,
+	p = +1,
+};
+
+@main := () -> () <| {
+	buf 'mut' = u8.[0] ** 0x1000;
+	bump'mut' = Bump.init(&'mut buf);
+
+	num: &'mut _' = bump.alloc(u128) match { .some(n) => n, .none => @panic() };
+	num.* = 69;
+
+	bump.reset();
+	std.print("Hello, World!\n");
+};
+
+File.export(Mashine, Event);
+
+Mashine := struct {
+	exe: &[]u64,   ip: u64,
+	stack: &[]u64, sp: u64,
+};
+
+Mashine.step := mashine_step;
+
+Event := enum {
+	null,
+	stack:{
+		overflow,
+		underflow,
+	},
+	exe:{
+		overflow,
+		underflow,
+		illegal,
+	},
+	not_flat(enum { a, b, c }),
+	exit(code: u32),
+};
+
+x := Event:exe:overflow;
+x := Token:illegal;
+
+mashine_step' = (state: &'mut Mashine) -> ?Event <| {
+	if state.ip >= state.exe.len ret .instruction.overflow;
+	inst' = state.exe[state.ip]; state.ip += 1;
+	
+	code' = inst & 0b1111;
+	ret code match {
+		0 => ...,
+		1 => ...,
+		# ...
+	};
+};
+
+bump' = Bump.{beg: 0, pos: 0, end: 0};
+
+Bump' = struct {
+	beg: uptr,
+	pos: uptr,
+	end: uptr,
+};
+
+init' = (buf: &'mut []u8) -> Bump <| {
+	ret Bump {
+		beg: buf.ptr,
+		pos: buf.ptr + buf.len,
+		end: buf.ptr + buf.len,
+	};
+};
+
+reset' = (bump: &'mut Bump) <| bump.pos = bump.end;
+
+check' = @inline (align: usz) <| {
+	@debug_assert(
+		align != 0 and align & (align - 1) == 0,
+		"expected that [align] is power of two,
+	);
+};
+
+raw' = (bump: &'mut Bump, align: usz, size: usz) -> Allocation <| {
+	Allocation' = ?*@aligned([size]u8, align);
+
+	align_check(align);
+
+	(overflow, raw)' = bump.pos -? size;
+	if overflow ret null;
+
+	pos' = raw & ~(align - 1);
+	if pos < bump.low ret null;
+
+	bump.pos = pos;
+	ret @cast(pos, Allocation);
+};
+
+alloc' = (bump: &'mut Bump, Type: type) -> ?*Type <| {
+	allocation' = bump.raw(Type.align, Type.size);
+	ret @cast(allocation, ?*Type);
+};

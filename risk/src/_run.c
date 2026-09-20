@@ -66,10 +66,10 @@ void run(Run run) { UNUSED(run);
 	// |================================================================================================|
 	// |> hello                                                                                         |
 
-	ArgsCmd cmd = {0}; {
-		if (!args_handle(fmt, cmd, (u8 const * const *)argv, (u32)argc)) goto err;
-		fmt_flush_stream(fmt, out);
-	};
+	// ArgsCmd cmd = {0}; {
+	// 	if (!args_handle(fmt, cmd, (u8 const * const *)argv, (u32)argc)) goto err;
+	// 	fmt_flush_stream(fmt, out);
+	// };
 
 	// fmt_lit(fmt, ANSI_BOLD ANSI_MAGENTA "\n" "Hello, Risky!" "\n" "\n" ANSI_RESET);
 	// if (!fmt_flush_stream(fmt, out)) {
@@ -129,6 +129,7 @@ void run(Run run) { UNUSED(run);
 	// };
 
 	FMT(fmt, FMT_LIT("\n"), FMT_BOLD);
+
 
 	// FMT(fmt,
 	// 	FMT_RED, FMT_LIT("mut"),

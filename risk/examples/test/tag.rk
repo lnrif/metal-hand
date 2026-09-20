@@ -1,0 +1,26 @@
+// enum(:repr = u8) { ... }
+// enum { :repr = u8, ... };
+|> Tag := enum(:repr = u8) {
+	eof, illegal,
+	plus, minus, star, slash,
+	ident, number, string,
+	colon, comma, semi,
+};
+
+|> Token := struct(:align = 8) {
+	pos: u32,
+	len: u24,
+	tag: Tag,
+};
+
+|> Node := struct(:align = 4, :size = .{ :min = 4 }, :abi = .c);
+
+|> Kind := enum(
+	:Tag = u8,
+	:Item = struct { name: &[]u8, tag: :Tag },
+	:Init = :Tag,
+	:item = (prev: :Item init: :Init) -> :Item :: ...,
+) {
+	eof = 1,
+	// ...
+};

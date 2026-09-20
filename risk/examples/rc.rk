@@ -1,0 +1,161 @@
+std := @mod("std.rk");
+
+print := {} -> {} <| {};
+
+m: ?usz.nonmax  = ...;
+m: ?usz.nonzero = ...;
+
+(ok, num) := m.items();
+
+extern: fn(abi: .c) <| (x: f32) -> (y: f32);
+
+find '= (
+	ptr: uptr,
+	len: usz,
+) -> (
+	ok: bool,
+	at: usz,
+) :: {
+	(at'mut, end') = (ptr, ptr + len);
+	while at != end then {
+		if at.* == 0 ret (true, at - ptr);
+		at += 1;
+	};
+	ret (false, usz.MAX);
+};
+
+f '= (T: type) -> T :: {
+	@at(.stack) temporary'mut: T = ---;
+	
+	loop {
+		@at(.reg) x'mut: usz = 0;
+	} :: {
+		x += 1;
+		std.print("f({0}) => {1}\n", x, x * x);
+		if x == 10 break;
+	};
+
+	ret T;
+};
+
+@main := () :: {
+	x: usz'mut = 0;
+	
+	loop {
+		x += 1;
+		std.print("f({0}) => {1}\n", x, x * x);
+		if x == 10 break;
+	};
+};
+
+Bump := struct {
+	low: *[?]u8,
+	pos: *[?]u8,
+	top: *[?]u8,
+};
+
+Env := struct {
+	file: File,
+	gravity: f32 = 9.8,
+	fps: f32 = 60.0,
+};
+
+Layout '= struct(size: usz, aling: usz);
+
+// Take the Risk, enjoy the speed
+// Risk: Write dangerous code safely
+
+x := .block: {
+	a := 4 * 3;
+	b := (3 - 1) * 5;
+	ret .block: a + b;
+};
+
+handle := (
+	state: &'mut State,
+	input: &Input,
+) -> (
+	ok: u1,
+	update: Update,
+) :: {
+	if !input.changed() ret (1, .empty());
+	if  state.invalid() ret (0, .reset());
+	return (1, .pulse())
+};
+
+Allocator := struct {
+	alloc: *(size: usz) -> uptr,
+	free:  *(ptr: uptr) -> (),
+};
+
+Rc := fn.pure(
+	@comptime Data: type,
+	@comptime Counter: type = u32,
+	@comptime allocator: Allocator,
+) -> type <| {
+	@assert(Counter.is(.uint));
+
+	Rc := struct {
+		count: Counter,
+		data: Data,
+	};
+
+	Rc <| {
+		alloc := (data: Data) -> *Rc <| {
+			ptr := malloc(@sizeof(Rc));
+			@assert(ptr != null);
+			ptr.* = Rc { count: 0, data: @zero };
+			ret ptr;
+		};
+	};
+
+	Rc <| {
+		acquire := (rc: *Rc) -> *Data <| {
+			rc.count += 1;
+			ret rc.data;
+		};
+		
+		release := (rc: *Rc) -> () <| {
+			if (rc.count < 2) free(rc.data);
+			else rc.count -= 1;
+		};
+	};
+
+	ret Rc;
+};
+
+Binary := struct {
+	ns[lhs, rhs]: *[2]Rc(Node),
+};
+
+Node := struct {
+	as: union {
+		int: struct { v: i64 },
+		add: Binary,
+		mul: Binary,
+	},
+	kind: Node.Kind,
+};
+
+Node := enum(u8) {
+	int: i64,
+	add: Binary,
+	mul: Binary,
+};
+
+Node <| mod {
+	Kind := enum.tag(Node);
+};
+
+get_name := (kind: Node.Kind) -> &[u8] <| {
+	kind match {
+		.int => "int",
+		.add => "add",
+		.mul => "mul",
+	};
+};
+
+fib := (n: u256) -> u256 <| {
+	if n < 2 then ret n;
+	ret fib(n - 1) + fib(n - 2);
+};

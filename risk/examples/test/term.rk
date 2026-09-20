@@ -1,0 +1,10 @@
+std := @load("std.rk");
+
+help := () <| std.print(HELP_MESSAGE);
+
+HELP_MESSAGE :=
+	"USAGE: risk [COMMAND] [ARGS]\n" ++
+	"\n" ++
+	"COMMANDS:\n" ++
+	"  build [file.rk]\n" ++
+	"  run [file.rk]\n";

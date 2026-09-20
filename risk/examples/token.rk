@@ -1,0 +1,67 @@
+f := (?toggle) -> bool :: toggle?;
+@assert f(:toggle);
+
+g := (toggle: bool = false) -> bool :: toggle;
+@assert g(:toggle = true);
+
+Tag := enum(:Tag = u8) {
+	:Item = struct { name: &[]u8; tag: Kind.@Tag };
+	:Init = Kind.@Tag;
+
+	:item = (
+		name: &[]u8;
+		prev: ?:Item;
+		init: ?:Init;
+	) => .{
+		:name = name;
+		:tag = _'{
+			if x ?= init then ret'_ x;
+			if x ?= prev then ret'_ x.tag + 1;
+			ret'_ 0;
+	};
+
+	plus = 0;
+	minus = 1;
+};
+
+Tag := enum(:Tag = u8) {
+	fixed {
+		:Item = struct {
+			name: &[]u8; tag: Kind.@Tag;
+			lex: &[]u8; len: u4;
+		};
+		
+		:Init = &[]u8;
+		
+		:item = (
+			name: &[]u8;
+			prev: ?:Item;
+			init: ?:Init,
+		) => .{
+			:name = name;
+
+			:tag = _'{
+				if x ?= init then ret'_ x;
+				if x ?= prev then ret'_ x.tag + 1;
+				ret'_ 0;
+			};
+
+			(:lex, :len) = _'{
+				init := init ? @panic("expected initialize value");
+				lex := if init {
+					" "  => "space";
+					"\t" => "tab";
+					"\n" => "newline";
+					else "`" ++ init ++ "`";
+				};
+				ret'_ (lex, init.len);
+			};
+		};
+
+		plus = "+";
+		minus = "-";
+
+		colon_eq = ":=";
+		eq_eq = "==";
+	};
+};

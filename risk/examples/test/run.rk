@@ -1,0 +1,106 @@
+Node := enum {
+	num(n: u64),
+	add(lhs, rhs: NodeId),
+};
+
+fun := proc(
+	@insert g(x),
+	x, y, z: f32,
+	s: f32,
+) -> () {
+	
+};
+
+u8 <- mod {
+	.MIN := 0;
+	.MAX := 2.pow(8) - 1;
+};
+
+
+Bump <- struct {
+	v[beg, pos, end]: [uptr] ** 3,
+};
+
+// <| Dot3 := struct { v[x,y,z]: [f64] ** 3 };
+Vec3 ~ #distinct Dot3;
+
+function();
+struct();
+
+() -> () :: ();
+
+
+Lexer ~ module {
+	next: proc {} -> {} ~ proc (lexer: &\mut Lexer) -> Token :: {};
+};
+
+
+Rot3 ::= struct {
+	v[x,y,z,w]: [f64] ** 3
+};
+
+Vec3 <| mod { ... };
+
+<| Block := struct { ptr: uptr.mut, len: u48 };
+
+<| main := () :: {
+	x := -a_x;
+};
+
+linux_reserve := (len: u64) -> 
+
+power := 33;
+
+status := if power == 80 then "high"
+        elif power == 50 then "medium"
+        elif power == 10 then "low"
+                           else "death";
+status := if power {
+	80 then "high",
+	50 then "medium",
+	10 then "low",
+	   else "death",
+};
+
+if kind == .add || kind == .sub then ...;
+if kind == [.add, .sub] then ...;
+if kind == .add then ... elif kind == .mut then ... else ...;
+
+Token := struct(
+	copy: .yes,
+) {
+	pos: u32,
+	len: u24,
+	kind: Token.Kind,
+};
+
+Token <| mod {
+	eof := (&self) :: self.kind == .eof;
+
+	Kind := enum {
+		eof,
+		...,
+	};
+};
+
+  if a.c then a.e
+elif b.c then b.e
+         else c.e;
+ 
+if {
+	a.c then a.e;
+	b.c then b.e;
+	    else c.e;
+};
+
+if kind == {
+	.add | .sub => e1,
+	.call => e2,
+	else => e3,
+};
+
+loop _'{
+	if peek.kind ==   .eof => ret'_  ;
+	if peek.kind == { .eof => ret'_ };
+	# ...
+};

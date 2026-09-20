@@ -1,0 +1,4 @@
+@compiler.register(@entry, .global);
+@entry'once: ?() -> !ret = null;
+
+

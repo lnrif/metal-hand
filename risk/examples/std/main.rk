@@ -1,0 +1,35 @@
+|Exit := (code: i32) -> !ret;
+|exit := @extern(:name = "exit", :ty = Exit);
+
+|Vec := mod {
+	|#call := (T: type) -> type {
+		V := struct { ptr: &'mut T, len: u64, cap: u64 };
+
+		V'mod <| mod {
+			|#braces := (array: [T; :N]) -> V :: {
+				...
+			};
+		};
+
+		V <| mod {
+			|push := (v: &'mut V) -> () :: {
+				...
+			};
+		};
+
+		ret V;
+	};
+
+	#braces := (array: [:T; :N]) -> type :: #call(T);
+};
+
+|main := () -> !ret :: {
+	
+	x := '_: {
+		x'mut := 0;
+		loop {
+			x += 1;
+			if x == 10 ret'_;
+		};
+	};
+};

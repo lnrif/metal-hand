@@ -1,0 +1,67 @@
+Linux := @load("linux.rk");
+
+print := (bytes: &[~]u8) -> usz {};
+
+print := (bytes: [~]u8) -> f32 :: {
+	Linux.write(.stdout, bytes);
+};
+
+Fn := struct {
+	args: [~]Arg,
+	rets: [~]Arg,
+};
+
+Fn :: type {
+	Arg := struct {
+		name: [~]u8,
+		kind: [~]u8,
+	};
+};
+
+Fn :: type {
+	@arrow(args: [~][~]u8, rets: [~][~]u8) -> Fn {
+		@todo();
+	};
+};
+
+z := (x: f64, y: f64) :: {
+	ret 2.0 * x - 0.5 * y + 1.0;
+};
+
+fn exit(code: u32 = 0) !ret {
+	Linux.exit(code);
+}
+
+exit(code: u32 = 0) -> !ret {
+	Linux.exit(code);
+};
+
+@entry() -> !ret {
+	main();
+	exit(0);
+};
+
+@main() -> () {
+	print("hello, world!\n");
+};
+
+M4x4 := union {
+	a: [4][4]f32,
+	struct {
+		a00: f32, a01: f32, a02: f32, a03: f32,
+		a10: f32, a11: f32, a12: f32, a13: f32,
+		a20: f32, a21: f32, a22: f32, a23: f32,
+		a30: f32, a31: f32, a32: f32, a33: f32,
+	},
+};
+
+// f := (): () => {};
+// f(): () => {};
+
+f(x: f32, y: f32) := {};
+
+Mat4x4::{ |_|
+	ZEROED := Mat4x4 {arr: [0] ** 16};
+	mul(m: Mat4x4, s: f32): Mat4x4 => @todo();
+};
+

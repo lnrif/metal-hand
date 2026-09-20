@@ -1,0 +1,41 @@
+|Vec3 := struct { :copy,
+	v[x, y, z]: [f32] ** 3,
+};
+
+Vec3 <| { |_|
+	|scale := (v: Vec3, s: f32) => Vec3 {
+		:x = v.x * s,
+		:y = v.y * s,
+		:z = v.z * s,
+	};
+};
+
+|main := () -> () :: {
+	x := 1.0;
+	y := 2.0;
+	v'mut := Vec3 { x, y, :z = 3.0 };
+};
+
+|fib := (n: u64) -> u64 :: fib(n - 1) + fib(n - 2) if n >= 2 else n;
+
+// @code (?expand: () = (), ...) -> INTERNAL :: {
+//    // checks if toggled/provided, comptime
+//    if expand? then ...;
+// };
+// @code (:expand = ()), @code(:expand)
+
+|hello := (count: u32, name: &[u8]) -> @code(:expand) {
+	buf'mut := std.fmt.init();
+	buf.write("print(\"Hello, {name}!\\n\")", :repeat = count);
+	return @code.from(buf.as_str());
+};
+
+|main := () :: {
+	print <- @load("std.rk").print;
+	@see(print) { hello() };
+};
+
+|Args := (T: type) -> type :: (a: u32, b: f32, t: T);
+|Rets := (T: type, count: usz) -> type :: (ts: [T; count])
+
+|f := Args(u8) -> Rets; // :: ...;

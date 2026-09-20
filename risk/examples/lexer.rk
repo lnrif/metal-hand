@@ -1,0 +1,136 @@
+Token => enum { :Tag = u8;
+	eof;
+	ill;
+	int;
+	plus; minus; mul; div;
+	open.{paren};
+	close.{paren};
+};
+
+Token => enum { :Tag = u8;
+	eof, ill,
+	str, int, id,
+	plus, minus, star, slash,
+	open.{paren, brace, bracket},
+	close.{paren, brace, bracket},
+};
+
+add => { a: f32, b: f32 } -> { c: f32 } :: a + b;
+
+Lexer => struct { src: &[?:0]u8 };
+
+X enum {};
+
+Tag => enum(u8) {};
+
+add => () :: a + b;
+
+lazy_path := vim.fun.stdpath("data") ++ "/lazy/lazy.nvim";
+
+if !vim.fs_stat(lazy_path)
+	do vim.fun.system({
+		"git", "clone",
+		"--filter=blon:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable",
+		lazy_path,
+	});
+
+vim.api.nvim_create_autocmd(.term_open, .{
+	:callback = {} => {
+		vim.opt_local.wrap = false;
+		vim.opt_local.side_csroll_off = 5;
+	},
+});
+
+@load("lazy.rk").setup(.[
+	.{
+		:name = "nvim-treesiiter",
+		:branch = "main",
+		:lazy = false,
+		:build = ":TSUpdate",
+		:config = fn(x: f32) f32 do 2 * x end;
+	},
+]);
+
+:config = fn(x: f32) f32 do 2 * x;
+:config = fn(x: f32) f32 do 2 * x;
+
+for @it := 1..=10 do print(@it);
+
+Lexer |=| type {
+	peek <| (&self) -> u8 => self.src[0];
+
+	skip <| (&'mut self) -> u8 => {
+		(src, peek) <~ self.(src, peek);
+		b := peek();
+		if b != 0 then src = &src[1..];
+		ret b;
+	};
+
+	next <| (&'mut self) -> Token => {
+		(peek, skip) <~ self.(peek, skip);
+		while peek() == " " do skip();
+		
+		done := (token: Token) -> @code(.expand) => { skip(); ret token; };
+		
+		peek() match {
+			"+" => done(.plus),
+"-" => done(.minus),
+			"*" => done(.mul),
+			"/" => done(.div),
+			"(" => done(.open.paren),
+			")" => done(.close.paren),
+			"0"..="9" => done(.int);
+			"\0" => ret .eof;
+			else => ret .ill;
+		};
+	};
+};
+
+expr => (lex: &'mut Lexer) -> (val: i32, ok: u1) :: {
+	left := factor(lex);
+	if !left.ok ret (0, 0);
+
+	while lex.peek() == "+" or lex.peek() == "-" {
+		op := lex.next();
+		right := factor(lex);
+		if !right.ok ret (0, 0);
+		left := if op == .plus
+			then (left.val + right.val, 1)
+			else (left.val - right.val, 1);
+	};
+	ret left;
+};
+
+factor => {
+	lex: &'mut Lexer,
+} -> {
+	val: i32,
+	ok: u1,
+} :: {
+	tok := lex.next();
+	if tok == .int ret (parse_int(lex), 1);
+	if tok == .lparen {
+		result := expr(lex);
+		if lex.next() != .rparen ret (0, 0);
+		ret result;
+	};
+	ret (0, 0);
+};
+
+STACK_MAX: u64 => 0;
+
+main => () -> void :: {
+	input := "2 + 3 * (4 - 1)";
+	lexer'mut = Lexer { src: &input, pos: 0 };
+	result := expr(&lexer);
+	if result.ok then std.print("= {0}\n", result.val)
+	else std.print("error\n");
+};
+
+extern'once: u32 = ---;
+
+@entry'once: ?() -> !ret = null;
+
+std := @load("std.rk");

@@ -1,0 +1,61 @@
+Str := struct(
+	index: .{ptr, len},
+) {
+	ptr: &[len]u8,
+	len: usz,
+};
+
+array_impl := (T: type) -> type :: {
+	eq := (a: &[~]T, b: &[~]T) -> bool :: {
+		if a.len != b.len ret false;
+		for 0..a.len :: |i| if a[i] != b[i] ret false;
+		ret true;
+	};
+	
+	[~]T <| { eq };
+};
+
+x[~] <| {
+	eq := (a: Str, b: Str) -> bool :: {
+		if a.len != b.len ret false;
+		for 0..a.len :: |i| if a[i] != b[i] ret false;
+		ret true;
+	};
+
+	start := (a: Str, b: Str) -> bool :: {
+		if a.len < b.len ret false;
+		return eq(&a[..b.len], b);
+	};
+
+	end := (a: Str, b: Str) -> bool :: {
+		if a.len < b.len ret false;
+		return eq(&a[a.len - b.len..], b);
+	};
+
+	trim := (x'mut: &[~]u8, p: &[~]u8) -> &[~]u8 :: {
+		for x.start(p) :: x = &x[p.len..];
+		for x.end(p)   :: x = &x[..x.len - p.len];
+		ret x;
+	};
+
+	split := (x: Str, p: Str) -> (Str, Str) :: {
+		if x.len < p.len ret (x, "");
+		
+		for 0..x.len - p.len :: |i| {
+			if x[i..].start(p) ret (x[..i], x[i..]);
+		};
+		
+		ret (x, "");
+	};
+};
+
+@entry := () -> !ret :: {
+	str := Str { @slice: "1 + 2 == 3" };
+	[x, str] := str.split("==");
+	exit(len(x) - 6);
+};
+
+exit := @cast(
+	*(i32) -> !ret,
+	@link("kernel32.dll", "ExitProcess"),
+);

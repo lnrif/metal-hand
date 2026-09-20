@@ -1,0 +1,5 @@
+<| std := @load("std.rk");
+
+@entry := {} => {
+	std.exit(0);
+};

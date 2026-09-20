@@ -1,0 +1,698 @@
+SAVE_REGS :=
+	\> push rax
+	\> push rbx
+	# comments between
+	\> push rcx
+	\> push rdx
+	# ...
+;
+
+x'mut: u8 = 0;
+
+x' := 1;
+
+x := f(
+	a'mut.&,
+	b'imm.&,
+	c'mut.&,
+);
+
+{a, b}': {f64, f64} = {0, 1};
+
+{a, b}': {f64, f64} = {0, 1};
+
+a': u64 = 0;
+b': u64 = 1;
+
+x := a'.&;
+
+|> exit := {code: u8 = 0} -> @no-ret :: @internal("exit")(:code = code);
+
+{~state, ~buf, limit} := init();
+
+let x = f(&mut a, b, &mut c);
+
+COMMANDS :=
+	\> COMMANDS:
+	\>      run   [file.rk]
+	\>      build [file.rk]
+	\>
+;
+
+x := @build("main.rk");
+
+file :=
+	"#include <stdio.h>" ++ "\n" ++ # input-output library
+	"void main(void) { printf(\"Hello, world!\\n\"); }" ++ "\n" # hello world
+;
+
+~ Bump := struct {
+	
+};
+
+~ add := {
+	a: f32,
+	b: f32,
+} -> {
+	c: f32,
+} :: {
+	:c = a + b;
+};
+
+x := 1.0;
+~ y'mut := 2.0;
+
+Bump := struct { beg, pos, end: uptr };
+
+Bump <| impl {
+	init := fn { from_slice, from_bounds };
+
+	from_slice := (slice: &'mut []u8) -> Bump :: {
+		(beg, end) := slice.{beg(), end()};
+		ret Bump { :beg = beg, :end = end };
+	};
+
+	from_bounds := (beg, end: uptr) -> Bump :: {
+		@assert(beg <= end, "invalid bounds, expected that [beg] <= [end]");
+		@assert(beg != 0 || (beg == 0 && end == 0), "invalid [slice]");
+		ret Bump { :beg = beg, :pos = beg, :end = end };
+	};
+};
+
+Player := struct {
+	name: &[:0]u8;
+	health, defense: f32 = (.., 1.0);
+	damage: (real, magic: f32);
+};
+
+Player {
+	:name = "Alex",
+	:health = 20.0,
+	:defense = 2.0,
+	:damage = (:real = 4.0, :magic = 12.0),
+	# :damage.real  = 4.0,
+	# :damage.magic = 12.0,
+};
+
+f := () -> i32 :: 0;
+f := () -> i32 :: 'block: { break 'block 0 };
+
+Counter := (limit: usz = 10) -> mod :: mod {
+	value: usz = 0;
+
+	next := () -> ?usz :: {
+		if value == limit ret null;
+		defer value += 1;
+		ret value; # 0, 1, 2, ...
+	};
+
+	peek := () -> usz :: value;
+};
+
+@static static'mut: i64 = 0;
+get := () -> i64 ~~ static :: static + 1;
+
+Draw := mod {
+	rect := (color: Color; x, y, w, h: u32) -> bool :: { .. };
+
+	box := (color: Color; offset, size: u32) -> bool ::
+		rect(
+			:color = color,
+			:x = offset, :y = offset,
+			:w = size,   :h = size,
+		);
+};
+
+f := (x: f32, y: f32) -> f32 :: ..;
+g := (x: f32, y: f32) -> f32 :: ..;
+
+z := g'g(
+	:y = 2.0,
+	:x = f'f(:x = 1.0, :y = :y'g, :z = :y'f),
+);
+
+function(:float = 0.3, :int = @trunc(i32, :float));
+
+func(
+	:arg1 = value1,
+	:arg2 = .kind,
+	:arg3 = :arg1,
+);
+
+F := (x: f32) -> (y: f32) <| fn(align: 64, abi: .c) :: {};
+f := F :: |x| x + 1.0;
+
+f := fn(
+	align: ?u32 = 64,
+	  abi: ?Abi = .c,
+) <| (
+	x: f32,
+) -> (
+	y: f32,
+) :: {
+	y := 2.0 * x + 1.0;
+	ret y;
+};
+
+Fn := fn(align: 64, abi: .c);
+
+f := Fn <| (
+	x: f32,
+) -> (
+	y: f32,
+) :: {
+	ret 2.0 * x + 1.0;
+};
+
+g := (x: f32) -> f32 :: 2.0 * x + 1.0;
+
+fib := (n: u64) -> u64 :: {
+	if n < 2 ret n;
+	(a, b, c)'mut = (0, 1, n - 1);
+	loop {
+		(a, b, c) = (b, a + b, c - 1);
+		if c == 0 ret b;
+	};
+};
+
+Mode := enum { comptime, runtime };
+
+Builder := (mode: Mode) -> type :: {
+	time := if mode == .comptime then @comptime else @dummy;
+	ret struct {
+		name: &[:0]u8 = "Unknown",
+		health: f32 = 20.0,
+		@apply(time) have_name:   bool = false,
+		@apply(time) have_health: bool = false,
+		@comptime mode: Mode = mode,
+	};
+};
+
+Builder <| type {
+	set_name := (builder: &'mut Builder, name: &[..]u8) -> &'mut Builder :: {
+		builder.name = name;
+		builder.have_name = true;
+		ret builder;
+	};
+
+	set_health := (builder'mut: &'mut Builder, health: f32) -> &'mut Builder :: {
+		builder.health = health;
+		builder.have_health = true;
+		ret builder;
+	};
+};
+
+Builder <| type {
+	can_build := (builder: &Builder) -> bool :: {
+		ret builder.have_name() && builder.have_health;
+	};
+};
+
+Builder <| type {
+	@drop build := (builder: Builder) -> Player :: {
+		if builder.can_build() ret Player {
+			name: builder.name,
+			health: builder.health,
+		};
+
+		@error("not enough fields for player building!");
+		if !builder.have_name   then @print(" - expected name   (use [set_name])");
+		if !builder.have_health then @print(" - expected health (use [set_health])");
+		@abort();
+	};
+};
+
+# ???
+# T..T := struct { beg: T, end: T, in: bool };
+# usz..usz
+# T[..] := struct { beg: T, end: T, in: bool };
+# usz[..]
+
+For := struct {
+	beg: usz,
+	end: usz,
+	step: usz,
+};
+
+For <| type {
+	short := (end: usz, step: usz = 1) :: {
+		ret for { beg: 0, end, step };
+	};
+
+	full := (beg: usz, end: usz, step: usz = 1) :: {
+		ret for { beg, end, step };
+	};
+};
+
+For <| type {
+	Body := (i: usz) -> ();
+};
+
+For <| impl {
+	@call := (self, body: Body) -> () :: {
+		loop {
+			i'mut := self.beg;
+		} :: {
+			if i == self.end break;
+			defer i += self.step;
+			body(i, :@label = .outer);
+		};
+	};
+};
+
+for: fn {
+	(          end: usz, step: usz = 1) -> For,
+	(beg: usz, end: usz, step: usz = 1) -> For,
+} = fn {
+	For.short,
+	For.full,
+};
+
+main := () -> i32 :: {
+	(a, b, c)'mut := (0, 1, 2);
+	if c <= 1 ret c;
+	loop {
+		(a, b, c) = (b, a + b, c - 1);
+		if c == 1 ret b;
+	};
+};
+
+f := (
+	x: i32,
+	g: (x: i32, y: i32) -> i32,
+) -> ((y: i32) -> i32) :: {
+	ret (y: i32) -> i32 :: g(x, y);
+};
+
+G := fn { A, B };
+A := (i32, i32)      -> i32;
+B := (i32, i32, i32) -> i32;
+
+f := (x: i32, g: G) -> ((y: i32) -> i32) :: {
+	ret typeof(g) match {
+		A => (y: i32) -> i32 :: g(x, y),
+		B => (y: i32) -> i32 :: g(x, y, 69),
+	};
+};
+
+sum := @run for @numbers :: |Num| {
+	[]Num <| impl {
+		sum := (&self) -> u32 {
+			acc'mut := 0; for arr :: acc += it; ret acc;
+		};
+	};
+};
+
+sum := @run {
+	for types:
+	loop {
+		idx'mut := 0;
+		types   := .[u8];
+		fns'mut := any.[];
+	} :: {
+		if idx == types.len ret fn.overload(fns);
+		T := types[idx];
+		f := (arr: &'const []) -> u32 {
+			if arr.len == 0 ret 0;
+			loop {
+				i  'mut = 0;
+				acc'mut = 0;
+			} :: {
+				acc += arr[i]; i += 1;
+				if arr.len == i ret acc;
+			};
+		};
+		fns.push(f);
+		idx += 1;
+	};
+};
+
+sum := @run {
+	loop {
+		idx'mut := 0;
+		types   := .[u8];
+		fns'mut := any.[];
+	} :: {
+		if idx == types.len ret fn.overload(fns);
+		T := types[idx];
+		f := (arr: &'const []) -> u32 {
+			if arr.len == 0 ret 0;
+			loop {
+				i  'mut = 0;
+				acc'mut = 0;
+			} :: {
+				acc += arr[i]; i += 1;
+				if arr.len == i ret acc;
+			};
+		};
+		fns.push(f);
+		idx += 1;
+	};
+};
+
+type(x) == type;
+
+usz <| type {
+	max: usz = 2 ** 64 - 1;
+
+	max <| type {
+		@call := (a: usz, b: usz) -> usz :: {
+			ret if a > b then a else b;
+		};
+	};
+};
+
+usz <| impl {
+	max := usz.max.@call;
+};
+
+ usz.max      == 2 ** 64 - 1;
+&usz.max      == &(2 ** 64 - 1);
+ usz.max(1, 2) == 2;
+ usz.max.@call == (usz, usz) -> usz;
+
+nonmax := enum(usz) {
+	
+	null = &usz.max.@call,
+};
+
+[]T <| impl {
+	find := (arr: &[]T, need: T) -> ?usz.nonmax {
+		
+	};
+};
+
+
+call();
+
+f.find();
+
+# all function have to hidden srguments:
+#  - @caller (on debug or not hidden)
+#  - @label  (comptime)
+
+# like:
+f := (
+	x: i64,
+	@caller := .outer,
+	@label  := .local,
+) :: {};
+
+# by @label you can return, break and continue
+# for example:
+f := (x: i64, @label := .local) :: ret x;
+# .local means current block/function, so, nothing changes
+# buf what we throw outer label?
+g := (x: i64, @label := .outer) :: ret x;
+# and caller:
+main := () -> i64 :: {
+	x := 0;
+	g(x);
+};
+# what happens?
+
+# pointer to function: &() -> ()
+# function pass in comptime: () -> ()
+# so, generates different functions with different g
+f := (g: (x: u32, 'b: @label) -> u32) :: {
+	x'mut := 10;
+	loop'b x = g(x, 'b);
+};
+
+f :: |x, 'b| {
+   if (x == 0) break'b;
+   x -= 1;
+};
+# the same:
+{
+	x'mut := 10;
+	loop x = {
+		if (x == 0) break;
+		x -= 1;
+	};
+};
+
+# what happen if:
+iter := for(1, 10);
+
+# if function accept in last argument function:
+update(|x| {});
+update :: |x| {};
+# if no arguments:
+update(|| {});
+update {};
+
+# we override @call realization:
+f := () -> () <| fn(call: g) :: {};
+g := (f: type(f), x: () = ()) -> () :: {};
+# so, f() == g(f)
+# or:
+
+block := type();
+
+block <| {
+	@call := (self, body: () -> ()) -> () :: {};
+};
+
+
+Config := struct {
+	file: File,
+	data: f32,
+};
+
+... <~ lexer.pos;
+
+# T'const is default mutability, defined by default:
+Config'const <~ Config { file'const, data'const };
+
+# T'mut defined by default
+Config'mut <~ Config { file'mut, data'mut };
+
+# you can change different fields mutability:
+# Config'mut = Config { file, data'mut };
+# Config'mut = Config { file, data };
+# and exclude fields at all:
+# Config'mut = Config { data };
+
+# You can define custom mutability:
+Config'file <~ Config { file'mut, data'const };
+
+# Config'mut -> &'mut Config (not &Config'mut)
+# Config'const -> &'const Config -> &Config (not &Config'const)
+
+# But what if...
+A := struct {
+	mut: &'const &'mut u8,
+};
+
+# And we want just &'const &'const u8?
+A'read <~ A { ??? }; # makes it sence at all?
+
+config_get := (config: &Config) -> f32 :: config.data;
+
+Config <| {
+	# you can define here whatever you want!
+	# get := (config: &Config) -> f32 :: config.data;
+	
+	# or take whatever
+	get := config_get;
+};
+
+# and call
+config := Config.init("config.txt");
+# or the same:
+# config'mut: Config = Config.init("config.txt");
+data := config.get();
+
+w'const = 0.1;
+b'mut   = 0.3;
+
+x := 10;
+
+Env'mut     = Env { file'mut, gravity'mut };
+Env'gravity = Env { file,     gravity'mut };
+Env'const   = Env { file,     gravity     };
+
+env: Env'gravity = Env { ... };
+env:   _'gravity = Env { ... };
+env := Env'gravity { ... };
+
+arr := &'mut [_]Env {{}, .{}};
+
+arr[0] = ...;
+
+A := struct { x: f32 };
+
+A <| {
+	get := (a: A) -> f32 :: a.x;
+};
+
+B := struct { y: f32 };
+
+B <| mod G {
+	y := (b: B) -> f32 :: b.y;
+};
+
+A <| B;
+
+# @as(u32, 10)
+@as(B, A).G.y
+
+# THIS
+a := A { x: 1.0, y: 1.0 };
+# OR THAT?
+a: &'mut A = &'mut A { x: 1.0 };
+
+Env <| {
+	gravity := (env: &'mut Env) -> f32 :: {
+		update(env);
+		ret env.gravity;
+	};
+};
+
+Env <| {
+	update := (env: &'mut Env) => {
+		if !env.file.is_changed() ret;
+		update_real(env);
+	};
+
+	update_real := (env: &Env'mut) => {
+		buf'mut: [1024]u8 = {0} ** _;
+		@assert(file.read_in(&'mut buf));
+		# parse...
+	};
+};
+
+NumberVT := (T: type) => struct {
+	add: *(a: T, b: T) -> T;
+	sub: *(a: T, b: T) -> T;
+};
+
+NumberDyn := struct {
+	it: uptr,
+	vt: *NumberVT,
+	y: f32,
+};
+
+BumpDirection := enum { up, down };
+
+BumpKind := enum {
+	pages(step: BumpStep),
+	slice,
+};
+
+BumpStep := enum {
+	page, double,
+	linear(min_step: usz),
+};
+
+Trit := enum(u2) {
+	neg = -1,
+	zer =  0,
+	pos = +1,
+};
+
+f := fn {x: f32} -> f32 :: 2.0 * x + 1.0;
+
+Function := fn { align: 32, abi: .win64, inline: .never };
+
+function := Function(
+	x: f32, y: f32, c: bool,
+	@unused r: uptr,
+	@unused p: &'mut [16]u8,
+) -> (
+	ok: bool,
+	result: usz,
+	optional: ?u8,
+) :: {
+	# stage 1
+	w := if c then 2.0 * x + 1.0 else 3.0 * y;
+	if w < 10.0 ret (false, .MAX, null);
+	# stage 2
+	i'mut = 0;
+	z := loop'a: {
+		i += 1;
+		if i > w break'a i;
+	};
+	ret (true, z, @trunc(u8, w));
+};
+
+(ok, result, _) := function(x: 10.0, y: -7.0, c: false, r: uptr.null, &'mut .{0} * _);
+
+f := @fn(align: 32) (x: f32) -> f32 :: x + 1.0
+
+Bump := fn {
+	T: type = u8,
+	dir: BumpDirection = .down,
+	kind: BumpKind = .slice,
+} -> type :: {
+	...
+};
+
+Number := (T: type) => trait {
+	add: (a: T, b: T) -> T,
+	sub: (a: T, b: T) -> T,
+};
+
+Money := struct { get: usz };
+# by default:
+# - Money'mut   .= Money { get'mut };
+# - Money'const .= Money { get }; # Money'const == Money
+
+Money <| {
+	inc := (m: &'mut Money) => {
+		# m.*.get += 1;
+		m.get += 1;
+	};
+};
+
+Money <| Number(Money) {
+	add := (a: Money, b: Money) => Money { get: a.get +! b.get },
+	sub := (a: Money, b: Money) => Money { get: a.get -! b.get },
+};
+
+@main = () => {
+	a := Money { get: 40 };
+	b'mut = Money { get: 50 };
+	# Number.add(a, b) == Money.add(a, b) == .add(a, b) == a.add(b)
+	b = .add(a, b);
+};
+
+Vec3 := struct { x: f32, y: f32, z: f32 };
+Vec2 := struct { x: f32, y: f32 };
+
+Vec3 <| type {
+	xy := (v: Vec3) -> Vec2 :: .{ x: v.x, y: v.y };
+	yx := (v: Vec3) -> Vec2 :: .{ x: v.y, y: v.x };
+	xyz := (v: Vec3) -> Vec3 :: .{ x: v.x, y: v.y, z: v.z };
+};
+
+DECIMAL_LEN := @tranc(usz, @lg(usz.MAX)) + 1;
+
+usz_as_decimal := (
+	x'mut: usz @assoc[as_decimal],
+	buf: &'mut [DECIMAL_LEN]u8,
+) -> (len: usz) :: {
+	len := if x == 0 then 1 else @tranc(usz, @lg(x));
+	idx'mut = len;
+	loop {
+		idx -= 1;
+		buf[idx] = x % 10 + u8("0");
+		x /= 10;
+		if x == 0 break;
+	};
+
+	ret len;
+};
+
+
+# std/entry.rk
+@entry'once: ?() -> !ret = null;
+
+# main.rk
+std := @load("std.rk");
+
+@entry <| {
+	std.print("Risky hello!") && std.exit();
+};
+

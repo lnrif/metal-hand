@@ -1,0 +1,23 @@
+raylib := type {
+	lib := @lib(:name = "libraylib.so", :abi = .c);
+
+	Color := struct(:repr = .c) {r: u8, g: u8, b: u8, a: u8};
+
+	InitWindow: *(w: u32, h: u32, title: *[?:0]u8) -> i32 = lib.link("InitWindow");
+};
+
+std := @load("std.rk");
+
+@entry {
+	if raylib.InitWindow(16 * 80, 9 * 80, "game!") != 0 then {
+		std.print("failed to create window!");
+		std.exit(-1);
+	};
+	
+	i'mut: usz = 0;
+	while !raylib.WindowShouldClose(): i +%= 1;
+	std.print("i: {i}");
+	
+	std.exit(0);
+};
+
