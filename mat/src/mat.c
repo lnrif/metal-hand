@@ -92,8 +92,8 @@ b8 mat_fmt_item(Fmt * fmt, f32 x, MatStyle style) {
 
 b8 mat_fmt_ex(Fmt * fmt, Mat mat, MatStyle style) {
 	if (style.range.max == style.range.min) {
-		style.range.min = -2.0;
-		style.range.max = +2.0;
+		style.range.min = -1.5;
+		style.range.max = +1.5;
 	};
 
 	u32 offset = 0;

@@ -106,17 +106,25 @@ void run(Run run) { UNUSED(run);
 	// Col B = COL_ON_STACK(1);
 	// f32 S = 0.1f;
 
-	Mat A = MAT_ON_STACK(4, 2);
+	u8 const PREC = 3;
 
-	A.ptr = (f32[]){
-		1.0, 2.0,
-		4.0, 3.0,
-		6.0, 0.1f,
-		0.6f, -0.9f,
-	};
+	Mat W = MAT_ON_STACK(2, 2);
+	W.ptr = (f32[]){0.8f, -0.2f, -0.63f, -0.01f};
+	mat_fmt(fmt, W, .prec = PREC, .name = S("W"));
 
-	mat_fmt(fmt, A, .prec = 1, .name = S("A"));
-	//
+	Col X = COL_ON_STACK(2);
+	X.ptr = (f32[]){0.4f, 0.7f};
+	mat_fmt(fmt, MAT_FROM_COL(X), .prec = PREC, .name = S("X"));
+
+	Col B = COL_ON_STACK(2);
+	B.ptr = (f32[]){-1.0f, +0.69f};
+	mat_fmt(fmt, MAT_FROM_COL(B), .prec = PREC, .name = S("B"));
+
+	Col Y = COL_ON_STACK(2);
+	mat_fma_col(Y, W, X, B);
+	mat_fmt(fmt, MAT_FROM_COL(Y), .prec = PREC, .name = S("Y"));
+
+
 	// Mat O = MAT_ON_STACK(4, 1);
 	// O.ptr = (f32[]){1.0, 3.0, 7.0, 5.0};
 	//
