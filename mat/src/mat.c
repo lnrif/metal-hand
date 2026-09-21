@@ -1,8 +1,17 @@
 #include "mat/src/mat.h"
 #include "std/fmt/core.h"
+#include "std/rnd/core.h"
 
 // |================================================================================================|
 // |> Matrix                                                                                        |
+
+void mat_rnd(Mat m, u32 * seed) {
+	col_rnd((Col){.ptr = m.ptr, .len = m.row * m.col}, seed);
+};
+
+void col_rnd(Col c, u32 * seed) {
+	for (u64 i = 0; i < c.len; i += 1) c.ptr[i] = rnd_bi(seed);
+};
 
 b8 mat_fma_col(Col dst, Mat w, Col x, Col b) {
 	if (w.row != dst.len || w.col != x.len || w.row != b.len) return false;
@@ -92,8 +101,8 @@ b8 mat_fmt_item(Fmt * fmt, f32 x, MatStyle style) {
 
 b8 mat_fmt_ex(Fmt * fmt, Mat mat, MatStyle style) {
 	if (style.range.max == style.range.min) {
-		style.range.min = -1.5;
-		style.range.max = +1.5;
+		style.range.min = -1.0;
+		style.range.max = +1.0;
 	};
 
 	u32 offset = 0;
@@ -111,7 +120,7 @@ b8 mat_fmt_ex(Fmt * fmt, Mat mat, MatStyle style) {
 		u32 repeat = (i == 0) ? 0 : offset;
 		FMT(fmt, FMT_REPEAT(' ', repeat), FMT_YELLOW, FMT_STR(beg));
 
-		Str delim = style.prec == 0 ? S(",") : S(", ");
+		Str delim = style.prec == 0 ? S("") : S(", ");
 		for (u64 j = 0; j < mat.col - 1; j += 1) {
 			f32 x = mat.ptr[i * mat.col + j];
 			mat_fmt_item(fmt, x, style);

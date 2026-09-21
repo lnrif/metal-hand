@@ -1,4 +1,4 @@
-#include "rnd/rnd.h"
+#include "std/rnd/core.h"
 
 u64 rnd_splitmix64(u64 * seed) {
 	u64 z = (*seed += 0x9e3779b97f4a7c15ULL);

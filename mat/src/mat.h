@@ -25,6 +25,9 @@ typedef struct { f32 * ptr; u64 len; } Col;
 #define MAT_FROM_COL(_col) \
 	((Mat){.ptr = (_col).ptr, .row = (_col).len, .col = 1})
 
+void mat_rnd(Mat m, u32 * seed);
+void col_rnd(Col c, u32 * seed);
+
 b8 mat_fma_col(Col dst, Mat w, Col x, Col b);
 
 // b8 col_add(Col dst, Col a, Col b);

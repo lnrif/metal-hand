@@ -29,8 +29,8 @@ flags=(
 
 linux=(
 	"-target"
-	# "x86_64-unknown-linux-gnu"
-	"aarch64-unknown-linux-gnu"
+	"x86_64-unknown-linux-gnu"
+	# "aarch64-unknown-linux-gnu"
 	"-Wl,-e,_start"
 	"-fno-pie"
 	"-no-pie"
