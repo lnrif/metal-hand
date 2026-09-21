@@ -105,9 +105,17 @@ void run(Run run) { UNUSED(run);
 	// Mat W = MAT_ON_STACK(1, 1);
 	// Col B = COL_ON_STACK(1);
 	// f32 S = 0.1f;
-	//
-	// Mat I = MAT_ON_STACK(4, 1);
-	// I.ptr = (f32[]){1.0, 2.0, 4.0, 3.0};
+
+	Mat A = MAT_ON_STACK(4, 2);
+
+	A.ptr = (f32[]){
+		1.0, 2.0,
+		4.0, 3.0,
+		6.0, 0.1f,
+		0.6f, -0.9f,
+	};
+
+	mat_fmt(fmt, A, .prec = 1, .name = S("A"));
 	//
 	// Mat O = MAT_ON_STACK(4, 1);
 	// O.ptr = (f32[]){1.0, 3.0, 7.0, 5.0};

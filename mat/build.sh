@@ -23,13 +23,14 @@ flags=(
 	"-Wshadow"
 	"-Wconversion"
 	"-Wsign-conversion"
-	"-fuse-ld=lld-22"
+	"-fuse-ld=lld"
+	# "-fuse-ld=lld-22"
 )
 
 linux=(
 	"-target"
-	"x86_64-unknown-linux-gnu"
-	# "aarch64-unknown-linux-gnu"
+	# "x86_64-unknown-linux-gnu"
+	"aarch64-unknown-linux-gnu"
 	"-Wl,-e,_start"
 	"-fno-pie"
 	"-no-pie"

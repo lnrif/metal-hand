@@ -32,7 +32,14 @@ b8 mat_fma_col(Col dst, Mat w, Col x, Col b);
 // b8 col_mul(Col dst, Col a, Col b);
 // b8 col_scale(Col dst, Col a, f32 scale);
 
-typedef struct { Str name; u8 prec; } MatStyle;
+typedef struct { f32 min; f32 max; } MatRange;
+
+typedef struct {
+	Str name;
+	u8 prec;
+	MatRange range;
+} MatStyle;
+
 b8 mat_fmt_ex(Fmt * fmt, Mat mat, MatStyle style);
 #define mat_fmt(fmt, mat, style...) mat_fmt_ex(fmt, mat, (MatStyle){style})
 
