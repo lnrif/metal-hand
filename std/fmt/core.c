@@ -322,7 +322,7 @@ FmtNumShot fmt_num_shot(u64 src, b8 neg, FmtNumStyle * style) {
 b8 fmt_num_write(Fmt * out, u64 src, b8 neg, FmtNumStyle const * style, FmtNumShot shot) {
 	u64 content_len = 0;
 	if (neg || FMT_N_IS_SIGN(style->opt)) content_len += 1;
-	if (FMT_N_GET_BASE(style->opt) != 10 && FMT_N_IS_PREFIX(style->opt)) content_len += 2;
+	if (FMT_N_GET_BASE(style->opt) != FMT_N_DEC && FMT_N_IS_PREFIX(style->opt)) content_len += 2;
 	content_len += shot.digits_len;
 
 	FmtLayout layout; b8 ok = fmt_layout(out, &layout, content_len, style->width, FMT_GET_ALIGN(style->opt), style->fill);
