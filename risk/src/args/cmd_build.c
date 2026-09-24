@@ -79,7 +79,8 @@ static b8 args_build_help(ArgsState * state, ArgsFiles * files, ArgsMem * mem) {
 
 		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "),
 		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "),
-		FMT_LOC(FLOW_LOC),
+		FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_GREY, FMT_LIT("'\n"),
 		FMT_RESET,
 	);
 

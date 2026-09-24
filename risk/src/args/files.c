@@ -50,7 +50,7 @@ default_output:
 b8 args_expected_file_ex(FlowLoc flow, ArgsState * state, Str arg) {
 	return FMT(state->out,
 		// message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 		FMT_WHITE,  FMT_LIT("expected "),
 		FMT_CYAN,   FMT_STR(arg), FMT_LIT(" "),
 		FMT_WHITE,  FMT_LIT("for "),
@@ -64,7 +64,6 @@ b8 args_expected_file_ex(FlowLoc flow, ArgsState * state, Str arg) {
 		FMT_STR(state->compiler), FMT_LIT(" "), FMT_STR(state->cmd), FMT_LIT(" --help"),
 		FMT_LIT("'"), FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  |\n"),
 		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
 		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 		FMT_RED, FMT_LIT("  '\n"),

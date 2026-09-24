@@ -60,7 +60,7 @@ b8 args_help_generic(ArgsState * state) {
 
 		FMT_LIT("\n"),
 
-		FMT_LOC(FLOW_LOC),
+		FMT_LOC_DEBUG(FLOW_LOC),
 		FMT_RESET,
 	);
 };
@@ -90,8 +90,8 @@ static b8 args_help_detail(ArgsState * state) {
 		FMT_CYAN, FMT_LIT("main.rk"),
 
 		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "),
-		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "),
-		FMT_LOC(FLOW_LOC),
+		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_RED, FMT_LIT("  '\n"),
 		FMT_RESET,
 	);
 };

@@ -9,22 +9,48 @@ SAVE_REGS :=
 
 x'mut: u8 = 0;
 
+x'mut := 1;
+
 x' := 1;
 
+
+x'mut: [4]u8 = u8.{0} ** _;
+
+|> State := struct { ... };
+|> Event := enum { ... };
+
+|> Events := std:Vec(Event);
+
+|> next := {
+	state: &State'mut;
+	events: &Events;
+	config: &Config;
+} -> {
+	action: Action;
+} :: {
+	if config.is-stopped() ret .none;
+	if events.is-empty() ret .none;
+
+	state.pos.x += events.x;
+	state.pos.y += events.y;
+
+	return .change_position;
+};
+
 x := f(
-	a'mut.&,
-	b'imm.&,
-	c'mut.&,
+	a.&'mut,
+	b.&'mut,
+	c.&'mut,
 );
 
 {a, b}': {f64, f64} = {0, 1};
 
 {a, b}': {f64, f64} = {0, 1};
 
-a': u64 = 0;
-b': u64 = 1;
+a'mut: u64 = 0;
+b'mut: u64 = 1;
 
-x := a'.&;
+x := a.&'mut;
 
 |> exit := {code: u8 = 0} -> @no-ret :: @internal("exit")(:code = code);
 
@@ -455,18 +481,16 @@ block <| {
 };
 
 
-Config := struct {
+Config => struct {
 	file: File,
 	data: f32,
 };
 
-... <~ lexer.pos;
-
 # T'const is default mutability, defined by default:
-Config'const <~ Config { file'const, data'const };
+Config'const => Config { file'const, data'const };
 
 # T'mut defined by default
-Config'mut <~ Config { file'mut, data'mut };
+Config'mut => Config { file'mut, data'mut };
 
 # you can change different fields mutability:
 # Config'mut = Config { file, data'mut };
@@ -475,27 +499,39 @@ Config'mut <~ Config { file'mut, data'mut };
 # Config'mut = Config { data };
 
 # You can define custom mutability:
-Config'file <~ Config { file'mut, data'const };
+Config'file => Config { file'mut, data'const };
 
 # Config'mut -> &'mut Config (not &Config'mut)
 # Config'const -> &'const Config -> &Config (not &Config'const)
 
 # But what if...
-A := struct {
+A => struct {
 	mut: &'const &'mut u8,
+};
+
+Config => struct { ... };
+
+Config <| mod {
+	DEFAULT => Config { ... };
+};
+
+Config <| mod {
+	load => fn {config: &'mut Config} -> {ok: bool} :: {
+		...
+	};
 };
 
 # And we want just &'const &'const u8?
 A'read <~ A { ??? }; # makes it sence at all?
 
-config_get := (config: &Config) -> f32 :: config.data;
+config_get => (config: &Config) -> f32 :: config.data;
 
-Config <| {
+Config <| mod {
 	# you can define here whatever you want!
 	# get := (config: &Config) -> f32 :: config.data;
 	
 	# or take whatever
-	get := config_get;
+	get => config_get;
 };
 
 # and call
@@ -617,14 +653,27 @@ function := Function(
 	ret (true, z, @trunc(u8, w));
 };
 
+{ok, result, _} := function(
+	.x = 10.0,
+	.y = -7.0,
+	.c = false,
+	.r = uptr.null,
+);
+
 (ok, result, _) := function(x: 10.0, y: -7.0, c: false, r: uptr.null, &'mut .{0} * _);
 
 f := @fn(align: 32) (x: f32) -> f32 :: x + 1.0
 
-Bump := fn {
-	T: type = u8,
-	dir: BumpDirection = .down,
-	kind: BumpKind = .slice,
+# comptime interface (or like typescript interfaces, but all known at comptime)
+Trait => trait {
+	f: fn { x: f32, y: f32 } -> f32;
+	x: f32;
+};
+
+Bump => fn {
+	T: type = u8;
+	dir: Bump-Dir = .down;
+	kind: Bump-Tag = .slice,
 } -> type :: {
 	...
 };
@@ -647,16 +696,18 @@ Money <| {
 };
 
 Money <| Number(Money) {
-	add := (a: Money, b: Money) => Money { get: a.get +! b.get },
-	sub := (a: Money, b: Money) => Money { get: a.get -! b.get },
+	add => fn { a: Money, b: Money } -> Money :: Money { get: a.get +! b.get },
+	sub => fn { a: Money, b: Money } -> Money :: Money { get: a.get -! b.get },
 };
 
-@main = () => {
+@main => {} :: {
 	a := Money { get: 40 };
 	b'mut = Money { get: 50 };
 	# Number.add(a, b) == Money.add(a, b) == .add(a, b) == a.add(b)
 	b = .add(a, b);
 };
+
+
 
 Vec3 := struct { x: f32, y: f32, z: f32 };
 Vec2 := struct { x: f32, y: f32 };

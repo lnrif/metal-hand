@@ -45,9 +45,27 @@ enum: u8 {
 	// LEX_STRING_LINE,
 	LEX_STRING_UNTERMINATED,
 
-	// // """
-	// // \| any bytes, \e\t\r\n, maybe ends with newline and without \"""
-	// LEX_UNTERMINATED_MULTILINE, // TODO
+	// not have new line at the end of lines (should write yourself)
+	// strips all spaces at start of every line
+	// if needed custom offset use '|=|'
+	// if needed auto newline write '|>|'
+	// use tabs only from '\t', otherwise error
+	// ```
+	// x := """
+	//      |>|#include <stdio.h>
+	//      |>|
+	//      |>|void main(void) {
+	//      |>|    printf("Hello, World\\n");
+	//      |>|};
+	//      """;
+	// ```
+	LEX_STRING_MULTI, // TODO
+
+	// """
+	// \> any bytes, \e\t\r\n, maybe ends with newline and without \"""
+	// """
+	LEX_STRING_MULTI_UNTERMINATED,
+
 
 	// '+%='
 	LEX_PLUS_PERCENT_EQ,
@@ -209,6 +227,13 @@ enum: u8 {
 		#undef X
 	LEX_KW_END = LEX_KW_RET,
 
+	// '# any bytes, ends with newline'
+	LEX_COMMENT,
+	// ' ', '\t', '\r',
+	LEX_SPACE,
+	// '\n'
+	LEX_NEWLINE,
+
 	////////////////////////////////
 	// kind count
 
@@ -216,71 +241,21 @@ enum: u8 {
 	LEX_KIND_COUNT = LEX_KIND_LAST,
 
 	////////////////////////////////
-	// extended kinds
-
-	// '# any bytes, ends with newline'
-	LEX_EXT_COMMENT = LEX_KIND_LAST,
-	// ' ', '\t', '\r',
-	LEX_EXT_SPACE,
-	// '\n'
-	LEX_EXT_NEWLINE,
-
-	// not have new line at the end of lines (should write yourself)
-	// strips all spaces at start of every line
-	// if needed custom offset use '\|'
-	// if needed auto newline write '\>'
-	// use tabs only from '\t'
-	//
-	// x := """
-	//      \> #include <stdio.h>
-	//      """
-	//      ++ "\n" ++
-	//      """
-	//      \> void main(void) {
-	//      \>     printf("Hello, World\\n");
-	//      \> };
-	//      """;
-	// LEX_EXT_STRING_MULTILINE, // TODO
-
-	////////////////////////////////
 	// + ext kind count
 
-	LEX_EXT_KIND_LAST,
-	LEX_EXT_KIND_COUNT = LEX_EXT_KIND_LAST,
-
-	////////////////////////////////
-	// typo kinds
-
-	// '// any bytes, ends with newline'
-	LEX_TYPO_SLASH_COMMENT = LEX_EXT_KIND_LAST,
-
-	// '`text`'
-	LEX_TYPO_QUOTES,
-	// '`text'
-	LEX_TYPO_QUOTES_UNTERMINATED,
-
-	// '$...'
-	LEX_TYPO_DOLLAR,
-	// '\...'
-	LEX_TYPO_BACK_SLASH,
-
-	////////////////////////////////
-	// + typo kind count
-
-	LEX_TYPO_KIND_LAST,
-	LEX_TYPO_KIND_COUNT = LEX_TYPO_KIND_LAST,
 };
 
-#define LEX_IS_TYPO(kind) (LEX_EXT_KIND_LAST <= (kind) && (kind) < LEX_TYPO_KIND_LAST)
+// #define LEX_IS_TYPO(kind) (LEX_EXT_KIND_LAST <= (kind) && (kind) < LEX_TYPO_KIND_LAST)
 
 typedef u8 LexKind;
-typedef u8 LexKindExt;
-typedef u8 LexKindTypo;
+// typedef u8 LexKindExt;
+// typedef u8 LexKindTypo;
 
-Str lex_token_name(LexKindTypo kind);
+Str lex_token_name(LexKind kind);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// token
+// |================================================================================================|
+// |> TOKEN                                                                                         |
+// |================================================================================================|
 
 typedef struct ALIGNED(8) {
 	union {
@@ -295,8 +270,9 @@ typedef struct ALIGNED(8) {
 
 u32 lex_len(LexToken token);
 
-////////////////////////////////////////////////////////////////////////////////
-// lexer
+// |================================================================================================|
+// |> LEXER                                                                                         |
+// |================================================================================================|
 
 // The lexer's task is to extract tokens—ideally without
 // creating cascading tokens that lead to cascading errors.

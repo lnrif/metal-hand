@@ -1,10 +1,10 @@
 #include "risk/src/args/args.h"
-#include "std/flow/core.h"
+#include "std/fmt/core.h"
 
 b8 args_unknown_command_ex(FlowLoc flow, ArgsState * state) {
 	return FMT(state->out,
 		// main message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 		FMT_WHITE, FMT_LIT("unknown command "),
 		FMT_RED, FMT_LIT("'"), FMT_STR(state->peek), FMT_LIT("'"),
 		FMT_LIT("\n"),
@@ -17,8 +17,9 @@ b8 args_unknown_command_ex(FlowLoc flow, ArgsState * state) {
 		FMT_WHITE, FMT_LIT(" for commands list"),
 		FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_RED, FMT_LIT("  '\n"),
 		FMT_RESET,
 	);
 };
@@ -26,7 +27,7 @@ b8 args_unknown_command_ex(FlowLoc flow, ArgsState * state) {
 b8 args_unknown_flag_ex(FlowLoc flow, ArgsState * state) {
 	return FMT(state->out,
 		// message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "), FMT_WHITE, FMT_LIT("unknown flag "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "), FMT_WHITE, FMT_LIT("unknown flag "),
 		FMT_RED, FMT_LIT("'"), FMT_STR(state->peek), FMT_LIT("'"),
 		FMT_WHITE, FMT_LIT(" for command "),
 		FMT_RED, FMT_LIT("'"), FMT_STR(state->cmd), FMT_LIT("'"),
@@ -39,8 +40,9 @@ b8 args_unknown_flag_ex(FlowLoc flow, ArgsState * state) {
 		FMT_STR(state->compiler), FMT_LIT(" "), FMT_STR(state->cmd), FMT_LIT(" --help"),
 		FMT_LIT("'"), FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_RED, FMT_LIT("  '\n"),
 		FMT_RESET,
 	);
 };
@@ -48,7 +50,7 @@ b8 args_unknown_flag_ex(FlowLoc flow, ArgsState * state) {
 b8 args_unexpected_arg_ex(FlowLoc flow, ArgsState * state) {
 	return FMT(state->out,
 		// message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "), FMT_WHITE, FMT_LIT("unexpected argument "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "), FMT_WHITE, FMT_LIT("unexpected argument "),
 		FMT_RED, FMT_LIT("'"), FMT_STR(state->peek), FMT_LIT("'"),
 		FMT_WHITE, FMT_LIT(" for command "),
 		FMT_RED, FMT_LIT("'"), FMT_STR(state->cmd), FMT_LIT("'"),
@@ -61,8 +63,9 @@ b8 args_unexpected_arg_ex(FlowLoc flow, ArgsState * state) {
 		FMT_STR(state->compiler), FMT_LIT(" "), FMT_STR(state->cmd), FMT_LIT(" --help"),
 		FMT_LIT("'"), FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_RED, FMT_LIT("  '\n"),
 		FMT_RESET,
 	);
 };

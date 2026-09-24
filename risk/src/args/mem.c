@@ -86,13 +86,13 @@ overflow:
 b8 args_mem_expected_ex(FlowLoc flow, ArgsState * state, ArgsMem const * mem) {
 	return FMT(state->out,
 		// message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 		FMT_MAGENTA, FMT_LIT("'--mem-limit'"),
 		FMT_WHITE, FMT_LIT(" expect memory size, for example default is "),
 		FMT_MAGENTA, FMT_LIT("'--mem-limit "), FMT_MEM(mem->min), FMT_LIT("'"), FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 		FMT_RESET,
 	);
 };
@@ -104,16 +104,16 @@ b8 args_mem_parse_fail_ex(FlowLoc flow, ArgsState * state, ArgsMemParse parse) {
 		case ARGS_MEM_PARSE_OK: return true;
 		case ARGS_MEM_PARSE_EMPTY: return FMT(state->out,
 			// message
-			FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+			FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 			FMT_WHITE, FMT_LIT("memory size is empty, please, provide"), FMT_LIT("\n"),
 			// debug
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 			FMT_RESET,
 		);
 		case ARGS_MEM_PARSE_OVERFLOW: return FMT(state->out,
 			// message
-			FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+			FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 			FMT_WHITE, FMT_LIT("memory size overflow"), FMT_LIT("\n"),
 			// literal
 			FMT_RED, FMT_LIT("  |.literal: "),
@@ -123,13 +123,13 @@ b8 args_mem_parse_fail_ex(FlowLoc flow, ArgsState * state, ArgsMemParse parse) {
 			// end
 			FMT_RED, FMT_LIT("'\n"),
 			// debug
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 			FMT_RESET,
 		);
 		case ARGS_MEM_PARSE_INVALID_DIGIT: return FMT(state->out,
 			// message
-			FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+			FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 			FMT_WHITE, FMT_LIT("invalid digit in memory size"), FMT_LIT("\n"),
 			// literal
 			FMT_RED, FMT_LIT("  |.literal: "),
@@ -139,20 +139,20 @@ b8 args_mem_parse_fail_ex(FlowLoc flow, ArgsState * state, ArgsMemParse parse) {
 			// end
 			FMT_RED, FMT_LIT("'\n"),
 			// debug
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 			FMT_RESET,
 		);
 		case ARGS_MEM_PARSE_INVALID_SCALE: return FMT(state->out,
 			// message
-			FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+			FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 			FMT_WHITE, FMT_LIT("invalid scale in memory size, allow only B, KB, MB and GB"), FMT_LIT("\n"),
 			FMT_RED, FMT_LIT("  | "), FMT_GREEN, FMT_STR(state->peek), FMT_LIT("\n"),
 			FMT_RED, FMT_LIT("  | "), FMT_REPEAT(' ', parse.at),
 			FMT_REPEAT('^', suffix_len), FMT_LIT(" here"), FMT_LIT("\n"),
 			// debug
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-			FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+			FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 			FMT_RESET,
 		);
 		default: PANIC("unhandled or invalid parse kind"); // parse.kind
@@ -163,7 +163,7 @@ b8 args_mem_parse_fail_ex(FlowLoc flow, ArgsState * state, ArgsMemParse parse) {
 b8 args_expect_mem_min_limit_ex(FlowLoc flow, ArgsState * state, ArgsMem const * mem) {
 	return FMT(state->out,
 		// message
-		FMT_BOLD, FMT_RED, FMT_LIT("[e] "),
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
 		FMT_WHITE, FMT_LIT("minimal "),
 		FMT_GREEN, FMT_LIT("'--mem-limit'"),
 		FMT_WHITE, FMT_LIT(" is "),
@@ -171,8 +171,8 @@ b8 args_expect_mem_min_limit_ex(FlowLoc flow, ArgsState * state, ArgsMem const *
 		FMT_WHITE, FMT_LIT(", but you set to "),
 		FMT_RED, FMT_MEM(mem->max), FMT_LIT("\n"),
 		// debug
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(flow),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(FLOW_LOC),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(flow),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 		FMT_RESET,
 	);
 };
