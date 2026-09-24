@@ -78,27 +78,27 @@ void run(Run run) { UNUSED(run);
 	#define IN  2
 	#define OUT 2
 
-	Col X = COL_ON_STACK(IN);  Col XG = COL_ON_STACK(IN);
-	Col Y = COL_ON_STACK(OUT); Col YG = COL_ON_STACK(OUT);
-
-	Lin l0 = (Lin){
-		.x = COL_ON_STACK(IN),      .xg = COL_ON_STACK(IN),
-		.y = COL_ON_STACK(OUT),     .yg = COL_ON_STACK(OUT),
-		.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
-		.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
-	};
-
-	Lin l1 = (Lin){
-		.x = X, .xg = XG,
-		.y = Y, .yg = YG,
-		.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
-		.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
-	};
+	// Col X = COL_ON_STACK(IN);  Col XG = COL_ON_STACK(IN);
+	// Col Y = COL_ON_STACK(OUT); Col YG = COL_ON_STACK(OUT);
+	//
+	// Lin l0 = (Lin){
+	// 	.x = COL_ON_STACK(IN),      .xg = COL_ON_STACK(IN),
+	// 	.y = COL_ON_STACK(OUT),     .yg = COL_ON_STACK(OUT),
+	// 	.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
+	// 	.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
+	// };
+	//
+	// Lin l1 = (Lin){
+	// 	.x = X, .xg = XG,
+	// 	.y = Y, .yg = YG,
+	// 	.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
+	// 	.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
+	// };
 
 	Mat W = MAT_ON_STACK(OUT, IN); mat_rnd(W, seed);
 	mat_fmt(fmt, W, .prec = WEIGHT_PREC, .name = S("W"));
 
-	// Col X = COL_ON_STACK(IN); col_rnd(X, seed);
+	Col X = COL_ON_STACK(IN); col_rnd(X, seed);
 	mat_fmt(fmt, MAT_FROM_COL(X), .prec = PREC, .name = S("X"));
 
 	Col B = COL_ON_STACK(OUT); col_rnd(B, seed);
@@ -109,6 +109,10 @@ void run(Run run) { UNUSED(run);
 	mat_fmt(fmt, MAT_FROM_COL(Y), .prec = PREC, .name = S("Y"));
 
 // ok:
+
+	Fmt tmp = FMT_ON_STACK(KB(4), FMT_SET_TEXT | FMT_SET_COLOR);
+	FMT(&tmp, FMT_STR(fmt_as_str(fmt), .opt = FMT_S_ESCAPE | FMT_S_QUOTES), FMT_LIT("\n"));
+	fmt_flush_stream(&tmp, out);
 	fmt_flush_stream(fmt, out);
 	proc_exit(0);
 

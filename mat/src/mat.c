@@ -66,13 +66,17 @@ static MatColor mat_color(f32 x, MatRange range) {
 
 b8 mat_fmt_color(Fmt * fmt, f32 x, MatStyle style) {
 	MatColor c = mat_color(x, style.range);
+	// return FMT(fmt, FMT_LIT("\x1b[38:2::104:104:104m"));
 	return FMT(fmt,
-		FMT_LIT("\x1B[38;2;", .flow = FMT_FLOW_COLOR),
+		FMT_LIT("\x1b[38;2;", .flow = FMT_FLOW_COLOR),
 		FMT_U64(c.r, .flow = FMT_FLOW_COLOR),
+		// FMT_U64(104, .flow = FMT_FLOW_COLOR),
 		FMT_LIT(";", .flow = FMT_FLOW_COLOR),
 		FMT_U64(c.g, .flow = FMT_FLOW_COLOR),
+		// FMT_U64(104, .flow = FMT_FLOW_COLOR),
 		FMT_LIT(";", .flow = FMT_FLOW_COLOR),
 		FMT_U64(c.b, .flow = FMT_FLOW_COLOR),
+		// FMT_U64(104, .flow = FMT_FLOW_COLOR),
 		FMT_LIT("m", .flow = FMT_FLOW_COLOR),
 	);
 };
