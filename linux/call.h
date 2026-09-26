@@ -35,8 +35,10 @@
 #define LINUX_SYS_STATX        332
 #define LINUX_STATX_SIZE 0x00000200U
 
-#define LINUX_SYS_EXIT        60
-#define LINUX_SYS_EXIT_GROUP  231
+#define LINUX_SYS_EXIT          60
+#define LINUX_SYS_EXIT_GROUP   231
+
+#define LINUX_SYS_GETRANDOM    318
 
 static inline iptr syscall0(iptr num) {
 	register iptr rax __asm__("rax") = num;
@@ -189,8 +191,10 @@ static inline iptr syscall6(iptr num, uptr a1, uptr a2, uptr a3, uptr a4, uptr a
 #define LINUX_SYS_STATX        332
 #define LINUX_STATX_SIZE 0x00000200U
 
-#define LINUX_SYS_EXIT         93
-#define LINUX_SYS_EXIT_GROUP   94
+#define LINUX_SYS_EXIT          93
+#define LINUX_SYS_EXIT_GROUP    94
+
+#define LINUX_SYS_GETRANDOM    278
 
 static inline iptr syscall0(iptr num) {
 	register iptr x8 __asm__("x8") = num;
