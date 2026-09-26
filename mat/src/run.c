@@ -3,26 +3,28 @@
 #include "std/proc/exit.h"
 #include "std/run/run.h"
 
+#include "std/rnd/core.h"
+
 #include "std/mem/page.h"
 #include "std/fmt/core.h"
 
 #include "mat/src/mat.h"
 
-b8 mat_alloc(Mat * mat, RegMan man, u32 row, u32 col) {
-	
-};
-
-b8 lin_init(Lin * lin, RegMan man, Bind x, u32 out) {
-	u64 len = 0;
-	Reg reg = reg_upd_arr(man, (f32*)0, 0, len, REG_DIR_UP);
-	if (!reg.is_valid) return false;
-
-	f32 * ptr = reg.any;
-
-	
-
-	return true;
-};
+// b8 mat_alloc(Mat * mat, RegMan man, u32 row, u32 col) {
+//
+// };
+//
+// b8 lin_init(Lin * lin, RegMan man, Bind x, u32 out) {
+// 	u64 len = 0;
+// 	Reg reg = reg_upd_arr(man, (f32*)0, 0, len, REG_DIR_UP);
+// 	if (!reg.is_valid) return false;
+//
+// 	f32 * ptr = reg.any;
+//
+//
+//
+// 	return true;
+// };
 
 void run(Run run) { UNUSED(run);
 	// |================================================================================================|
@@ -69,14 +71,14 @@ void run(Run run) { UNUSED(run);
 		proc_exit(255);
 	};
 
-	u8 const SEED = 0;
+	// u8 const SEED = 0;
 
-	u8 const WEIGHT_PREC = 1;
-	u8 const PREC = 1;
-	u32 _seed = (u32)(u64)&SEED; u32 * seed = &_seed;
+	u8 const WEIGHT_PREC = 3;
+	u8 const PREC = 3;
+	u32 _seed = (u32)rnd_seed(); u32 * seed = &_seed;
 
-	#define IN  2
-	#define OUT 2
+	#define IN  3
+	#define OUT 3
 
 	// Col X = COL_ON_STACK(IN);  Col XG = COL_ON_STACK(IN);
 	// Col Y = COL_ON_STACK(OUT); Col YG = COL_ON_STACK(OUT);
@@ -110,9 +112,9 @@ void run(Run run) { UNUSED(run);
 
 // ok:
 
-	Fmt tmp = FMT_ON_STACK(KB(4), FMT_SET_TEXT | FMT_SET_COLOR);
-	FMT(&tmp, FMT_STR(fmt_as_str(fmt), .opt = FMT_S_ESCAPE | FMT_S_QUOTES), FMT_LIT("\n"));
-	fmt_flush_stream(&tmp, out);
+	// Fmt tmp = FMT_ON_STACK(KB(4), FMT_SET_TEXT | FMT_SET_COLOR);
+	// FMT(&tmp, FMT_STR(fmt_as_str(fmt), .opt = FMT_S_ESCAPE | FMT_S_QUOTES), FMT_LIT("\n"));
+	// fmt_flush_stream(&tmp, out);
 	fmt_flush_stream(fmt, out);
 	proc_exit(0);
 
