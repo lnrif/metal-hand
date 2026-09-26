@@ -1,34 +1,50 @@
-Kind := enum {
+Kind => enum {
 	atom { id, num, str },
 	binary { add, sub },
 };
 
-Ref := struct { kind: Kind, offset: u16 };
+Ref => struct { kind: Kind, offset: u16 };
 
-Atom := struct {
+Atom => struct {
 	pos: u32,
 	id: u32,
 };
 
-Binary := struct {
-	pos: u32,
-	lhs: Ref,
-	rhs: Ref,
+Binary => struct {pos: u32, ns[lhs, rhs]: [2]Ref};
+
+Check .= {x: f32} -> {ok: bool};
+check .= Check {a} -> {b} :: a > 0.0;
+
+
+Check := {x: f32} -> {ok: bool};
+check := Check {a} -> {b} :: a > 0.0;
+
+x := 0;
+x => 0; x .= 0;
+
+proc check(
+	x: f32;
+) (
+	ok: bool;
+) {
+	return x > 0.0;
 };
+
+
 
 # Получается, что узлы имеют Ref, чтобы получить доступ к узлам.
 # Но что если предположить, что дети всегда лежат перед родителями?
 # Для вложенных деревьев (вложенные деревье не всегда можно сложить таким образом, поэтому) использовать новый тип узла: NodeLink
 
-Kind := enum {
+Kind => enum {
 	link,
 	atom { id, num, str },
 	binary { add, sub },
 };
 
-Link   := struct { kind: Kind, offset: u16 };
-Atom   := struct { pos: u32, id: u32 };
-Binary := struct { pos: u32 };
+Link   => struct { kind: Kind, offset: u16 };
+Atom   => struct { pos: u32, id: u32 };
+Binary => struct { pos: u32 };
 
 # Но как родитель поймет, что у него за ребенок без типа?
 # Значит надо хранить типы в структурах, но так как тип занимет 1 байт, но получается паддинг в 7 байт - потеря.

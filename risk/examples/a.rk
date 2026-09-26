@@ -13,15 +13,14 @@ x'mut := 1;
 
 x' := 1;
 
-
 x'mut: [4]u8 = u8.{0} ** _;
 
-|> State := struct { ... };
-|> Event := enum { ... };
+State => struct { ... };
+Event => enum { ... };
 
-|> Events := std:Vec(Event);
+Events => std.Vec(Event);
 
-|> next := {
+next => proc {
 	state: &State'mut;
 	events: &Events;
 	config: &Config;
@@ -65,11 +64,22 @@ COMMANDS :=
 	\>
 ;
 
-x := @build("main.rk");
+x => @build("main.rk");
 
-file :=
-	"#include <stdio.h>" ++ "\n" ++ # input-output library
-	"void main(void) { printf(\"Hello, world!\\n\"); }" ++ "\n" # hello world
+file0 =>
+	|\|#include <stdio.h>
+	|\|
+	|\|void main(void) {
+	|\|    printf("Hello, world!\\n");
+	|\|}
+;
+
+file1 =>
+	|:|#include <stdio.h>\n
+	|:|\n
+	|:|void main(void) {\n
+	|:|    printf("Hello, world!\\n");\n
+	|:|}\n
 ;
 
 ~ Bump := struct {
@@ -88,10 +98,10 @@ file :=
 x := 1.0;
 ~ y'mut := 2.0;
 
-Bump := struct { beg, pos, end: uptr };
+Bump => struct { beg, pos, end: uptr };
 
 Bump <| impl {
-	init := fn { from_slice, from_bounds };
+	init => proc { from_slice, from_bounds };
 
 	from_slice := (slice: &'mut []u8) -> Bump :: {
 		(beg, end) := slice.{beg(), end()};

@@ -1,7 +1,16 @@
-file :=
+file =>
 	# input-output library
-	\> #include <stdio.h>
+	/~/#include <stdio.h>
 	# hello world
-	\> void main(void) { printf(\"Hello, world!\\n\"); }
+	/~/void main(void) { printf("Hello, world!\\n"); }
 ;
+
+file =>
+	# input-output library
+	/:/#include <stdio.h>\n
+	# hello world
+	/:/void main(void) { printf("Hello, world!\\n"); }\n
+;
+
+
 
