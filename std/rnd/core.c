@@ -1,4 +1,15 @@
 #include "std/rnd/core.h"
+#include "linux/rnd.h"
+
+#if LINUX_SYSCALL
+
+u64 rnd_seed(void) {
+	u64 seed;
+	linux_getrandom((void*)&seed, sizeof(seed));
+	return seed;
+};
+
+#endif
 
 u64 rnd_splitmix64(u64 * seed) {
 	u64 z = (*seed += 0x9e3779b97f4a7c15ULL);

@@ -3,6 +3,8 @@
 
 #include "std/core.h"
 
+u64 rnd_seed(void);
+
 /// returns random u64 in range 0..=U64_MAX
 u64 rnd_splitmix64(u64 * seed);
 /// returns random u32 in range 0..=U32_MAX
