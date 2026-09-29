@@ -1,21 +1,20 @@
-Atom := enum {
+Atom => enum {
 	tree { t: Tree },
 	token { t: Token },
 };
 
-Tree := struct {
+Tree => struct {
 	len: u32,
 	tag: Tree.Tag,
 };
 
-Block := struct { ptr: uptr, len: usz };
+Block => struct { ptr: uptr, len: usz };
 
-reserve := func(len: u64) -> Block :: {}; 
+reserve => proc { len: u64 } -> Block :: {};
 
-mod[Tree] {
-	Tag := enum(
-		:like = u8,
-	) {
+Tree <| {
+	# Tag => enum { :Tag = u8; ... };
+	Tag => enum(:tag = u8) {
 		# '(...)'
 		paren,
 		# '{...}'
@@ -25,15 +24,15 @@ mod[Tree] {
 	};
 };
 
-Token := struct {
+Token => struct {
 	pos: u32,
 	len: u24,
 	tag: Token.Tag,
 };
 
-mod[Token] {
-	Tag := enum(
-		:like = u8,
+Token <| {
+	Tag => enum(
+		:Tag = u8,
 	) {
 		eof,
 		number,
@@ -44,7 +43,4 @@ mod[Token] {
 		slash,
 	};
 };
-
-Vec = struct { ptr: uptr };
-
 

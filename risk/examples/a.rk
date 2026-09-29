@@ -1,3 +1,27 @@
+add := proc { a, b: f32 } -> f32 :: a + b;
+
+add := proc {
+	a: f32;
+	b: f32;
+} -> {
+	c: f32;
+} :: {
+	c <- a + b;
+	ret c;
+};
+
+add := proc { a, b, ret c: f32 } :: a + b;
+
+add := proc {
+	a, b: f32;
+	ret c: f32;
+} :: {
+	c <- a + b;
+	ret c;
+};
+
+fma := proc { x, w, b, ret y: f8 } :: w * x + b;
+
 SAVE_REGS :=
 	\> push rax
 	\> push rbx
@@ -17,11 +41,10 @@ x'mut: [4]u8 = u8.{0} ** _;
 
 State => struct { ... };
 Event => enum { ... };
-
 Events => std.Vec(Event);
 
 next => proc {
-	state: &State'mut;
+	state: &'mut State;
 	events: &Events;
 	config: &Config;
 } -> {
@@ -30,30 +53,47 @@ next => proc {
 	if config.is-stopped() ret .none;
 	if events.is-empty() ret .none;
 
+	some-local := .change-position;
+
 	state.pos.x += events.x;
 	state.pos.y += events.y;
 
-	return .change_position;
+	ret some-local;
 };
 
-x := f(
-	a.&'mut,
-	b.&'mut,
-	c.&'mut,
-);
+load => proc { path: &[]u8 } -> type :: {
+	buf := File.load(path) match {
+		.ok { buf } => buf,
+		.err { x } => @error("..."),
+		# ...
+	};
+	ret mod;
+};
 
-{a, b}': {f64, f64} = {0, 1};
+@main => proc {} :: {
+	state'mut  := State { ... };
+	events'mut := .EMPTY;
+	config := Config.load(CONFIG);
+	# ...
+	action := next(
+		state.&'mut,
+		events.&,
+		config.&,
+	);
+	# ...
+	CONFIG => "config.rk";
+};
 
-{a, b}': {f64, f64} = {0, 1};
+std => @load("std.rk").parse(.rk);
 
 a'mut: u64 = 0;
 b'mut: u64 = 1;
 
 x := a.&'mut;
 
-|> exit := {code: u8 = 0} -> @no-ret :: @internal("exit")(:code = code);
+exit => proc { code: u8 = 0 } -> @no-ret :: @internal("exit")(:code = code);
 
-{~state, ~buf, limit} := init();
+{state, buf, limit} := init();
 
 let x = f(&mut a, b, &mut c);
 
@@ -640,7 +680,11 @@ Trit := enum(u2) {
 
 f := fn {x: f32} -> f32 :: 2.0 * x + 1.0;
 
-Function := fn { align: 32, abi: .win64, inline: .never };
+Function := fn(
+	align=32,
+	abi=.win64,
+	inline=.never,
+);
 
 function := Function(
 	x: f32, y: f32, c: bool,

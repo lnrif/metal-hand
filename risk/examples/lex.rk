@@ -1,4 +1,4 @@
-|> Token := struct(
+Token => struct(
 	repr: .c,
 	align: 8,
 ) {
@@ -6,7 +6,7 @@
 	kind: Kind,
 };
 
-|> Kind := enum(
+Kind => enum(
 	repr: u8,
 ) {
 	eof, ill,
@@ -14,25 +14,27 @@
 	plus, minus,
 };
 
-|> relu := type {
-	|> FACTOR := 0.01;
+relu => type {
+	FACTOR => 0.01;
 	
-	|> call := (x: f32) -> f32 {
+	call => (x: f32) -> f32 {
 		ret if x > 0.0 then x else x * FACTOR;
 	};
 	
-	|> deriv := (x: f32) -> f32 {
+	deriv => (x: f32) -> f32 {
 		ret if x > 0.0 then 1.0 else FACTOR;
 	};
 };
 
 |Lexer := struct { pos: &[?]u8; };
 
-|Os   := enum { linux, windows };
-|Arch := enum { x86-64, arm-64 };
+Os   => enum { linux, windows };
+Arch => enum { x86-64, arm-64 };
+
+ASM => "some text" ++ "\n";
 
 T := '_: {
-	A := Region-Args;
+	A => Region-Args;
 	ret'_ A;
 };
 
@@ -41,9 +43,7 @@ player.health -= enemy.damage;
 compile_linux := { ... } -> { ... } :: ...;
 compile_impl  := { os: Os; arch: Arch } -> {} :: {};
 
-|x := ;
-
-f := { x, y, z: f32; a: u8 } -> f64 :: x.(f64) * y.(f64) * z.(f64) + a.(f64);
+f => proc { x, y, z: f32; a: u8; ret b: f32; } :: x.(f64) * y.(f64) * z.(f64) + a.(f64);
 
 lex := {
 	src'mut: &[?:0]u8;
