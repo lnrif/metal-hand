@@ -3,272 +3,262 @@
 
 #include "std/str/core.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// token kind
+// |================================================================================================|
+// |> TOKEN TAG                                                                                    |
 
-// S - simple
-// E - extenstion
-
-// X(kind, upper, lower, lit)
+// X(tag, upper, lower)
 #define LEX_KEYWORDS(X) \
-	X(LEX_KW_IF, IF, if, "if") \
-	X(LEX_KW_THEN, THEN, then, "then") \
-	X(LEX_KW_ELIF, ELIF, elif, "elif") \
-	X(LEX_KW_ELSE, ELSE, else, "else") \
+	X(LEX_T_IF, IF, if) \
+	X(LEX_T_DO, DO, do) \
+	X(LEX_T_ELIF, ELIF, elif) \
+	X(LEX_T_ELSE, ELSE, else) \
 	\
-	X(LEX_KW_FOR, FOR, for, "for") \
-	X(LEX_KW_LOOP, LOOP, loop, "loop") \
+	X(LEX_T_FOR, FOR, for) \
+	X(LEX_T_LOOP, LOOP, loop) \
 	\
-	X(LEX_KW_CONTINUE, CONTINUE, continue, "continue") \
-	X(LEX_KW_DEFER, DEFER, defer, "defer") \
-	X(LEX_KW_RET, RET, ret, "ret") \
+	X(LEX_T_CONTINUE, CONTINUE, continue) \
+	X(LEX_T_BREAK, BREAK, break) \
+	X(LEX_T_DEFER, DEFER, defer) \
+	X(LEX_T_RET, RET, ret) \
 
-enum: u8 {
+typedef enum: u8 {
 	// end of file
-	LEX_EOF,
+	LEX_T_EOF,
 
 	// unprintable control codes:
 	//  - 0-31 (except for 9 '\t', 10 '\n', 13 '\r')
 	// extended ASCII codes or utf-8:
 	//  - 127-255
-	LEX_ILLEGAL,
+	LEX_T_ILLEGAL,
 
 	// 'ident_123', '_unused'
 	// '@mod', '@load'
-	LEX_IDENT,
+	LEX_T_IDENT,
 	// '123_456', '1_000_000', '0Ascii007'
-	LEX_NUMBER,
+	LEX_T_NUMBER,
 
 	// "text\n"
-	LEX_STRING,
+	LEX_T_STRING,
 	// '\> text' or '\: text'
-	// LEX_STRING_LINE,
-	LEX_STRING_UNTERMINATED,
+	// LEX_T_STRING_LINE,
+	LEX_T_STRING_UNTERMINATED,
 
+	// // any bytes not escaped
+	LEX_T_STRING_LINE,
+
+	// TODO:
 	// not have new line at the end of lines (should write yourself)
 	// strips all spaces at start of every line
 	// if needed custom offset use '|=|'
 	// if needed auto newline write '|>|'
 	// use tabs only from '\t', otherwise error
 	// ```
-	// x := """
-	//      |>|#include <stdio.h>
-	//      |>|
-	//      |>|void main(void) {
-	//      |>|    printf("Hello, World\\n");
-	//      |>|};
-	//      """;
+	// x =>
+	//    //#include <stdio.h>
+	//    //
+	//    //void main(void) {
+	//    //    printf("Hello, World\\n");
+	//    //};
+	// ;
 	// ```
-	LEX_STRING_MULTI, // TODO
+	// LEX_T_STRING_MULIT,
 
+	// TODO:
 	// """
 	// \> any bytes, \e\t\r\n, maybe ends with newline and without \"""
 	// """
-	LEX_STRING_MULTI_UNTERMINATED,
-
+	// LEX_T_STRING_MULTI_UNTERMINATED,
 
 	// '+%='
-	LEX_PLUS_PERCENT_EQ,
+	LEX_T_PLUS_PERCENT_EQ,
 	// '+='
-	LEX_PLUS_EQ,
+	LEX_T_PLUS_EQ,
 
 	// '+%'
-	LEX_PLUS_PERCENT,
+	LEX_T_PLUS_PERCENT,
 
 	// '++'
-	LEX_PLUS_PLUS,
+	LEX_T_PLUS_PLUS,
 	// '+'
-	LEX_PLUS,
+	LEX_T_PLUS,
 
 	// '-%='
-	LEX_MINUS_PERCENT_EQ,
+	LEX_T_MINUS_PERCENT_EQ,
 	// '-='
-	LEX_MINUS_EQ,
+	LEX_T_MINUS_EQ,
 
 	// '-%'
-	LEX_MINUS_PERCENT,
+	LEX_T_MINUS_PERCENT,
 
 	// '---'
-	LEX_MINUS_MINUS_MINUS,
+	LEX_T_MINUS_MINUS_MINUS,
 	// '->'
-	LEX_MINUS_GT,
+	LEX_T_MINUS_GT,
 	// '-'
-	LEX_MINUS,
+	LEX_T_MINUS,
 
 	// '*%='
-	LEX_STAR_PERCENT_EQ,
+	LEX_T_STAR_PERCENT_EQ,
 	// '*='
-	LEX_STAR_EQ,
+	LEX_T_STAR_EQ,
 
 	// '*%'
-	LEX_STAR_PERCENT,
+	LEX_T_STAR_PERCENT,
 
 	// '**'
-	LEX_STAR_STAR,
+	LEX_T_STAR_STAR,
 	// '*'
-	LEX_STAR,
+	LEX_T_STAR,
 
 	// '/='
-	LEX_SLASH_EQ,
+	LEX_T_SLASH_EQ,
 	// '/'
-	LEX_SLASH,
+	LEX_T_SLASH,
 
 	// '%'
-	LEX_PERCENT,
+	LEX_T_PERCENT,
 
 	// '&&'
-	LEX_AND_AND,
+	LEX_T_AND_AND,
 	// '&'
-	LEX_AND,
+	LEX_T_AND,
 
 	// '||'
-	LEX_OR_OR,
+	LEX_T_OR_OR,
 	// '|'
-	LEX_OR,
+	LEX_T_OR,
 
 	// '^'
-	LEX_CARET,
+	LEX_T_CARET,
 
 	// '!='
-	LEX_NOT_EQ,
+	LEX_T_NOT_EQ,
 	// '=='
-	LEX_EQ_EQ,
+	LEX_T_EQ_EQ,
 	// '=>'
-	LEX_EQ_GT,
+	LEX_T_EQ_GT,
 	// '='
-	LEX_EQ,
+	LEX_T_EQ,
 
 	// '<='
-	LEX_LT_EQ,
+	LEX_T_LT_EQ,
 	// '<|'
-	LEX_LT_OR,
+	LEX_T_LT_OR,
 	// '<~'
-	LEX_LT_TILDE,
+	LEX_T_LT_TILDE,
 	// '<-'
-	LEX_LT_MINUS,
+	LEX_T_LT_MINUS,
 	// '<'
-	LEX_LT,
+	LEX_T_LT,
 
 	// '>='
-	LEX_GT_EQ,
+	LEX_T_GT_EQ,
 	// '>'
-	LEX_GT,
+	LEX_T_GT,
 
 	// '~~'
-	LEX_TILDE_TILDE,
+	LEX_T_TILDE_TILDE,
 	// '~>'
-	LEX_TILDE_GT,
+	LEX_T_TILDE_GT,
 	// '~'
-	LEX_TILDE,
+	LEX_T_TILDE,
 
 	// '..='
-	LEX_DOT_DOT_EQ,
+	LEX_T_DOT_DOT_EQ,
 	// '..<'
-	LEX_DOT_DOT_LT,
+	LEX_T_DOT_DOT_LT,
 	// '...'
-	LEX_DOT_DOT_DOT,
+	LEX_T_DOT_DOT_DOT,
 	// '..'
-	LEX_DOT_DOT,
+	LEX_T_DOT_DOT,
 	// '.*'
-	LEX_DOT_STAR,
+	LEX_T_DOT_STAR,
 	// '.&'
-	// LEX_DOT_AND,
+	LEX_T_DOT_AND,
 	// '.'
-	LEX_DOT,
+	LEX_T_DOT,
 
 	// '::'
-	LEX_COLON_COLON,
+	LEX_T_COLON_COLON,
 	// ':='
-	LEX_COLON_EQ,
+	LEX_T_COLON_EQ,
 	// ':'
-	LEX_COLON,
+	LEX_T_COLON,
 
 	// ';'
-	LEX_SEMI,
+	LEX_T_SEMI,
 	// ','
-	LEX_COMMA,
+	LEX_T_COMMA,
 	// '''
-	LEX_TICK,
+	LEX_T_TICK,
 
 	// '!!'
-	LEX_BANG_BANG,
+	LEX_T_BANG_BANG,
 	// '!'
-	LEX_BANG,
+	LEX_T_BANG,
 
 	// '???'
-	LEX_QMARK_QMARK_QMARK,
+	LEX_T_QMARK_QMARK_QMARK,
 	// '??'
-	LEX_QMARK_QMARK,
+	LEX_T_QMARK_QMARK,
 	// '?'
-	LEX_QMARK,
+	LEX_T_QMARK,
 
 	// '@'
-	LEX_AT,
+	LEX_T_AT,
 
 	// '('
-	LEX_PAREN_OPEN,
+	LEX_T_PAREN_OPEN,
 	// ')'
-	LEX_PAREN_CLOSE,
+	LEX_T_PAREN_CLOSE,
 	// '['
-	LEX_BRACKET_OPEN,
+	LEX_T_BRACKET_OPEN,
 	// ']'
-	LEX_BRACKET_CLOSE,
+	LEX_T_BRACKET_CLOSE,
 	// '{'
-	LEX_BRACE_OPEN,
+	LEX_T_BRACE_OPEN,
 	// '}'
-	LEX_BRACE_CLOSE,
+	LEX_T_BRACE_CLOSE,
 
 	////////////////////////////////
 	// keywords
 
-	LEX_KW_BEG,
-		#define X(kind, _2, _3, _4) kind,
-		LEX_KEYWORDS(X)
-		#undef X
-	LEX_KW_END = LEX_KW_RET,
+	#define X(tag, upper, lower) tag,
+	LEX_KEYWORDS(X)
+	#undef X
+
+	////////////////////////////////
+	// spaces
 
 	// '# any bytes, ends with newline'
-	LEX_COMMENT,
+	LEX_T_COMMENT,
 	// ' ', '\t', '\r',
-	LEX_SPACE,
+	LEX_T_SPACE,
 	// '\n'
-	LEX_NEWLINE,
+	LEX_T_NEWLINE,
+} LexTag;
 
-	////////////////////////////////
-	// kind count
+#define LEX_IS_SPACES(tag) ((tag) >= LEX_T_COMMENT)
 
-	LEX_KIND_LAST,
-	LEX_KIND_COUNT = LEX_KIND_LAST,
+// #define LEX_T_BEG LEX_T_IF
+// #define LEX_T_END (LEX_T_RET + 1)
 
-	////////////////////////////////
-	// + ext kind count
+#define LEX_TAG_COUNT ((u8)LEX_T_NEWLINE + 1)
 
-};
-
-// #define LEX_IS_TYPO(kind) (LEX_EXT_KIND_LAST <= (kind) && (kind) < LEX_TYPO_KIND_LAST)
-
-typedef u8 LexKind;
-// typedef u8 LexKindExt;
-// typedef u8 LexKindTypo;
-
-Str lex_token_name(LexKind kind);
+Str lex_name(LexTag tag);
 
 // |================================================================================================|
 // |> TOKEN                                                                                         |
 // |================================================================================================|
 
 typedef struct ALIGNED(8) {
-	union {
-		struct { LexKind kind; u8 _len[3]; };
-		u32 kind_and_len;
-	};
 	u32 pos;
+	u16 len;
+	LexTag tag;
 } LexToken;
 
-#define LEX_TOKEN(_kind, _pos, _len) \
-	((LexToken){.pos = (_pos), .kind_and_len = (_kind) | ((_len) << 8)})
-
-u32 lex_len(LexToken token);
+#define LEX_TOKEN(_pos, _len, _tag) \
+	((LexToken){.pos = (_pos), .len = (_len), .tag = (_tag)})
 
 // |================================================================================================|
 // |> LEXER                                                                                         |
@@ -283,13 +273,13 @@ typedef struct {
 	u8 const * end;
 } Lexer;
 
-#define LEXER(src) \
-	((Lexer){ \
-		.base = (src).ptr, \
-		.start = (src).ptr, \
-		.at = (src).ptr, \
-		.end = (src).ptr + (src).len, \
-	})
+// #define LEXER(src) \
+// 	((Lexer){ \
+// 		.base = (src).ptr, \
+// 		.start = (src).ptr, \
+// 		.at = (src).ptr, \
+// 		.end = (src).ptr + (src).len, \
+// 	})
 
 Lexer    lex_init(StrZ src);
 LexToken lex_next(Lexer * lexer);

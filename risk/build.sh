@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p "risk/build/"
+mkdir -p "risk/.build/"
 
 MONO_BUILD="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/mono-build.sh"
 
@@ -9,5 +9,5 @@ if [[ ! -f "$MONO_BUILD" ]]; then
 	exit 1
 fi
 
-bash "$MONO_BUILD" "risk/build/risk" "risk/src" "std" "linux" "windows" "$@"
+bash "$MONO_BUILD" "risk/.build/risk" "risk/src" "std" "linux" "windows" "$@"
 

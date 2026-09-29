@@ -47,6 +47,15 @@ ENUM(AstKind, u8) {
 		// a / b
 		AST_K_BIN_DIV,
 
+		// a += b
+		AST_K_BIN_ADD_SET,
+		// a -= b
+		AST_K_BIN_SUB_SET,
+		// a *= b
+		AST_K_BIN_MUL_SET,
+		// a /= b
+		AST_K_BIN_DIV_SET,
+
 		// a < b
 		AST_K_BIN_LT,
 		// a <= b
