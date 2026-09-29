@@ -168,11 +168,6 @@ static inline b8 fmt_layout(Fmt * out, FmtLayout * layout, u64 field_len, u32 wi
 		u64 pad_rhs = 0;
 
 		switch (align) {
-			case FMT_LHS: {
-				pad_lhs = 0;
-				pad_rhs = pad_total;
-				field = ptr;
-			} break;
 			case FMT_RHS: {
 				pad_lhs = pad_total;
 				pad_rhs = 0;
@@ -182,6 +177,11 @@ static inline b8 fmt_layout(Fmt * out, FmtLayout * layout, u64 field_len, u32 wi
 				pad_lhs = pad_total / 2;
 				pad_rhs = pad_total - pad_lhs;
 				field = &ptr[pad_lhs];
+			} break;
+			case FMT_LHS: {
+				pad_lhs = 0;
+				pad_rhs = pad_total;
+				field = ptr;
 			} break;
 			default: PANIC("invalid [align] in fmt_layout");
 		};
@@ -626,6 +626,7 @@ b8 fmt_mem_ex(Fmt * out, u64 src, FmtNumStyle * style) {
 
 b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 	u64 pos = fmt->pos;
+	b8 res = true;
 
 	for (u64 i = 0; i < len; i += 1) {
 		FmtArg arg = args[i];
@@ -662,10 +663,13 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len) {
 			default: PANIC("invalid [arg.tag]");
 		};
 
-		if (!ok) return false;
+		if (ok) continue;
+
+		res = false;
+		break;
 	};
 
 	fmt->last = STR_MUT(fmt->ptr + pos, fmt->pos - pos);
-	return true;
+	return res;
 };
 

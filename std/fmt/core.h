@@ -76,9 +76,9 @@ typedef u8 FmtTag;
 #define FMT_TAG_FLOW(tag) ((tag) >> 4)
 
 enum: u8 {
-	FMT_LHS   = 0b00000000,
+	FMT_RHS   = 0b00000000,
 	FMT_MID   = 0b00000001,
-	FMT_RHS   = 0b00000010,
+	FMT_LHS   = 0b00000010,
 	FMT_ALIGN = 0b00000011,
 };
 
@@ -88,9 +88,9 @@ enum: u8 {
 #define FMT_IS_RHS(opt) (FMT_GET_ALIGN(opt) == FMT_RHS)
 
 typedef enum: u8 {
-	FMT_S_LHS    = FMT_LHS,
-	FMT_S_MID    = FMT_MID,
 	FMT_S_RHS    = FMT_RHS,
+	FMT_S_MID    = FMT_MID,
+	FMT_S_LHS    = FMT_LHS,
 	FMT_S_QUOTES = 0b00000100,
 	FMT_S_ESCAPE = 0b00001000,
 } FmtStrOpt;
@@ -139,9 +139,9 @@ b8         fmt_str_ex(Fmt * out, Str src, FmtStrStyle * style);
 // |================================================================================================|
 
 typedef enum: u8 {
-	FMT_N_LHS = FMT_LHS,
-	FMT_N_MID = FMT_MID,
 	FMT_N_RHS = FMT_RHS,
+	FMT_N_MID = FMT_MID,
+	FMT_N_LHS = FMT_LHS,
 
 	FMT_N_DEC = 0b00000000,
 	FMT_N_BIN = 0b00000100,
@@ -425,14 +425,22 @@ b8 fmt_write(Fmt * fmt, FmtArg * args, u64 len);
 #define FMT_GREY   FMT_BRIGHT_BLACK
 #define FMT_ORANGE FMT_COLOR(S("\x1B[38;5;208m"))
 
-#define FMT_LOC(flow) \
+#define FMT_LOC(path, row, col) \
 	FMT_CYAN, \
-	FMT_LIT("--> "), \
-	FMT_STR(str_z_init(flow.get).str), \
+	FMT_LIT("--> "), FMT_STR(path), \
+	FMT_LIT(":"), FMT_U64(row), \
+	FMT_LIT(":"), FMT_U64(col), \
+	FMT_LIT("\n")
+
+#define FMT_LOC_NO_ARROW(path, row, col) \
+	FMT_CYAN, \
+	FMT_STR(path), \
+	FMT_LIT(":"), FMT_U64(row), \
+	FMT_LIT(":"), FMT_U64(col), \
 	FMT_LIT("\n")
 
 #define FMT_LOC_DEBUG(flow) \
-	FMT_CYAN, \
+	FMT_MAGENTA, \
 	FMT_LIT("~~> "), \
 	FMT_STR(str_z_init(flow.get).str), \
 	FMT_LIT("\n")
