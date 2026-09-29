@@ -144,6 +144,8 @@ b8 pages_read_exec(Reg reg)  { return set_prot(reg.ptr, reg.ptr + reg.len, PAGES
 // |================================================================================================|
 // |> PAGES API                                                                                     |
 
+// TODO: refactor all this
+
 Reg pages_alloc_api(void * ctx, Reg reg, RegReq req) {
 	Pages * ps = ctx;
 	if (ps == 0 || !ps->is_valid) return REG_NIL;

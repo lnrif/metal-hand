@@ -77,6 +77,16 @@ typedef union {
 	};
 } StrZ;
 
+#define STR_Z_EMBED(str_z, str, ptr, any, raw, len) \
+	union { \
+		StrZ str_z; \
+		Str  str; \
+		struct { \
+			union { uptr ptr; void * const any; u8 const * raw; }; \
+			u64 len; \
+		}; \
+	}
+
 // |================================================================================================|
 // |> [StrZ]: init                                                                                  |
 

@@ -2,10 +2,14 @@
 #define STD_FILE_H
 
 #include "std/mem/reg.h"
+#include "std/str/core.h"
 
-typedef struct {
-	union { uptr ptr; void * any; u8 * raw; b64 is_valid; };
-	u64 len;
+typedef union {
+	StrZ str_z; Str str;
+	struct {
+		union { uptr ptr; void * any; u8 * raw; b64 is_valid; };
+		u64 len;
+	};
 } FileBuf;
 
 #define FILE_BUF_RAW ((FileBuf){0})

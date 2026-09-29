@@ -239,11 +239,11 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 	(CAT(x, ID) / CAT(d, ID)) + (CAT(x, ID) % CAT(d, ID) != 0); \
 })
 
-#define MIN(a, b) _MIN(a, b, UNIQ(_urm_min_))
-#define MAX(a, b) _MAX(a, b, UNIQ(_urm_max_))
+#define MIN(a, b) _MIN(a, b, UNIQ(_std_min_))
+#define MAX(a, b) _MAX(a, b, UNIQ(_std_max_))
 #define CLAMP(x, min, max) MAX(min, MIN(x, max))
 
-#define DIV_CEIL(x, d) _DIV_CEIL(x, d, UNIQ(_urm_div_ceil_))
+#define DIV_CEIL(x, d) _DIV_CEIL(x, d, UNIQ(_std_div_ceil_))
 #define ALIGN_IS_SANE(x) ((x) != 0 && ((x) & ((x) - 1)) == 0)
 
 u64 max_u64(u64 * ptr, u64 len);
