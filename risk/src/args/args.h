@@ -15,10 +15,18 @@ typedef enum: u8 {
 	ARGS_CMD_RUN,
 } ArgsCmdKind;
 
+typedef enum: u8 {
+	ARGS_BUILD_LEX_NO,
+	ARGS_BUILD_LEX_SHORT,
+	ARGS_BUILD_LEX_FULL,
+} ArgsBuildLex;
+
 typedef struct {
 	Str input;
 	Str output;
 	u64 mem;
+	ArgsBuildLex lex;
+	b8 ast;
 } ArgsCmdBuild;
 
 typedef struct {

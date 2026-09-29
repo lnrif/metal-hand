@@ -66,7 +66,7 @@ static b8 args_build_help(ArgsState * state, ArgsFiles * files, ArgsMem * mem) {
 		FMT_LIT("\n"), FMT_GREY, FMT_LIT("|> "),
 		FMT_GREEN, FMT_LIT("-m, --mem-limit"),
 		FMT_CYAN, FMT_LIT(" <memory> = "), FMT_MEM(mem->max),
-		FMT_GREY, FMT_LIT(" (for example 0, 64KiB, 16MiB, 4GiB)"),
+		FMT_GREY, FMT_LIT(" (for example 64KiB, 16MiB, 4GiB)"),
 		FMT_LIT("\n"), FMT_GREY, FMT_LIT("| "),
 		FMT_LIT("limit maximal memory usage"),
 	);
@@ -87,6 +87,34 @@ static b8 args_build_help(ArgsState * state, ArgsFiles * files, ArgsMem * mem) {
 	return true;
 };
 
+typedef struct {
+	ArgsBuildLex lex;
+	b8 ast;
+} ArgsBuildFlags;
+
+ArgsResult args_build_flags_try(ArgsState * state, ArgsBuildFlags * flags) {
+	if (str_eq_lit(state->peek, "--lex")) {
+		flags->lex = ARGS_BUILD_LEX_SHORT;
+		goto known;
+	};
+
+	if (str_eq_lit(state->peek, "--lex-full")) {
+		flags->lex = ARGS_BUILD_LEX_FULL;
+		goto known;
+	};
+
+	if (str_eq_lit(state->peek, "--ast")) {
+		flags->ast = true;
+		goto known;
+	};
+
+	return ARGS_UNKNOWN;
+
+known:
+	arg_skip(&state->args);
+	return ARGS_KNOWN;
+};
+
 b8 args_build(ArgsState * state, ArgsCmd * cmd) {
 	ASSERT(str_eq(state->peek, S("b")) || str_eq(state->peek, S("build")), "expected command");
 	arg_skip(&state->args); state->cmd = S("build");
@@ -97,11 +125,14 @@ b8 args_build(ArgsState * state, ArgsCmd * cmd) {
 		mem = (ArgsMem){.min = mem_min, .max = MAX(mem_min, MB(256))};
 	};
 
+	ArgsBuildFlags flags = (ArgsBuildFlags){.lex = ARGS_BUILD_LEX_NO, .ast = false};
+
 	while (str_sane(state->peek)) {
 		ARGS_TRY(args_skip_flag_try(state));
 		ARGS_TRY(args_common_try(state));
 		ARGS_TRY(args_files_try(state, &files));
 		ARGS_TRY(args_mem_try(state, &mem));
+		ARGS_TRY(args_build_flags_try(state, &flags));
 		return args_state_radical(state);
 	};
 
@@ -110,8 +141,8 @@ b8 args_build(ArgsState * state, ArgsCmd * cmd) {
 
 	*cmd = (ArgsCmd){
 		.as.build = (ArgsCmdBuild){
-			.input = files.input,
-			.output = files.output,
+			.input = files.input, .output = files.output,
+			.lex = flags.lex, .ast = flags.ast,
 			.mem = mem.max,
 		},
 		.color = state->color,
