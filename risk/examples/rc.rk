@@ -7,9 +7,9 @@ m: ?usz.nonzero = ...;
 
 (ok, num) := m.items();
 
-extern: fn(abi: .c) <| (x: f32) -> (y: f32);
+extern: proc(abi: .c) { x: f32 } -> { y: f32 };
 
-find '= (
+find => (
 	ptr: uptr,
 	len: usz,
 ) -> (

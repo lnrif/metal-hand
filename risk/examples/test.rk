@@ -1,14 +1,28 @@
-raylib := type {
-	lib := @lib(:name = "libraylib.so", :abi = .c);
+raylib => type {
+	lib => @lib(:name = "libraylib.so", :abi = .c);
 
-	Color := struct(:repr = .c) {r: u8, g: u8, b: u8, a: u8};
+	Color => struct(
+		:repr = .c,
+	) {
+		r: u8,
+		g: u8,
+		b: u8,
+		a: u8,
+	};
 
-	InitWindow: *(w: u32, h: u32, title: *[?:0]u8) -> i32 = lib.link("InitWindow");
+	InitWindow: &proc {
+		w: u32, h: u32,
+		title: *[?:0]u8,
+	} -> {
+		res: i32,
+	} :: {
+		lib.link("InitWindow");
+	};
 };
 
-std := @load("std.rk");
+std => @load("std.rk");
 
-@entry {
+@entry => proc {} :: {
 	if raylib.InitWindow(16 * 80, 9 * 80, "game!") != 0 then {
 		std.print("failed to create window!");
 		std.exit(-1);
@@ -20,4 +34,6 @@ std := @load("std.rk");
 	
 	std.exit(0);
 };
+
+f => proc {} -> {} :: {};
 

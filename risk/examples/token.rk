@@ -4,22 +4,23 @@ f := (?toggle) -> bool :: toggle?;
 g := (toggle: bool = false) -> bool :: toggle;
 @assert g(:toggle = true);
 
-Tag := enum(:Tag = u8) {
-	:Item = struct { name: &[]u8; tag: Kind.@Tag };
-	:Init = Kind.@Tag;
+Tag => enum(
+	:Tag = u8,
+	:Item = struct { name: &[]u8; tag: Kind.@Tag },
+	:Init = Kind.@Tag,
 
-	:item = (
-		name: &[]u8;
-		prev: ?:Item;
-		init: ?:Init;
-	) => .{
+	:item = proc {
+		name: &[]u8,
+		prev: ?:Item,
+		init: ?:Init,
+	} -> :Item :: .{
 		:name = name;
 		:tag = _'{
 			if x ?= init then ret'_ x;
 			if x ?= prev then ret'_ x.tag + 1;
 			ret'_ 0;
 	};
-
+) {
 	plus = 0;
 	minus = 1;
 };
