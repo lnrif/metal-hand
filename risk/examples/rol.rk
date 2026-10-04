@@ -1,0 +1,5 @@
+{ print } => @load("std.rk");
+
+main => {} :: print("Risky Hello!");
+
+fib => { n: u64 } -> { x: u64 } :: @todo();

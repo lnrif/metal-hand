@@ -1,37 +1,24 @@
-Token => struct(
-	repr: .c,
-	align: 8,
-) {
-	len: u8,
-	kind: Kind,
-};
-
-Kind => enum(
-	repr: u8,
-) {
-	eof, ill,
-	id, str, int,
-	plus, minus,
-};
+Token => struct(:repr = .c, :align = 8) { len: u8, kind: Kind };
+Kind => enum(:repr = u8) { eof, ill, id, str, int, plus, minus };
 
 relu => type {
-	FACTOR => 0.01;
-	
-	call => (x: f32) -> f32 {
-		ret if x > 0.0 then x else x * FACTOR;
+	FACTOR => f16.{0.01};
+
+	call => proc { x: f16 } -> f16 :: {
+		ret if x > 0.0 do x else x * FACTOR;
 	};
-	
-	deriv => (x: f32) -> f32 {
-		ret if x > 0.0 then 1.0 else FACTOR;
+
+	deriv => proc { x: f16 } -> f16 :: {
+		ret if x > 0.0 do 1.0 else FACTOR;
 	};
 };
 
-|Lexer := struct { pos: &[?]u8; };
+Lexer => struct { pos: &[?]u8; };
 
 Os   => enum { linux, windows };
 Arch => enum { x86-64, arm-64 };
 
-ASM => "some text" ++ "\n";
+ASM => "test rax, rax" ++ "\n";
 
 T := '_: {
 	A => Region-Args;
@@ -40,36 +27,72 @@ T := '_: {
 
 player.health -= enemy.damage;
 
-compile_linux := { ... } -> { ... } :: ...;
-compile_impl  := { os: Os; arch: Arch } -> {} :: {};
+compile_linux := proc { ... } -> { ... } :: ...;
+compile_impl  := proc { os: Os; arch: Arch } -> {} :: {};
 
-f => proc { x, y, z: f32; a: u8; ret b: f32; } :: x.(f64) * y.(f64) * z.(f64) + a.(f64);
+f => proc { x: f64, y: f64, z: f64, a: u8 } -> { b: f64 } :: f64.{x} * f64.{y} * f64.{z} + f64.{a};
 
-lex := {
-	src'mut: &[?:0]u8;
-} -> {
-	lexer: Lexer;
-} :: {
-	
+lex => proc { src'mut: &[128:0]u8 } -> { lexer: Lexer } :: @todo();
+
+Lexer lex_lex(u8z const * src) { RISK_TODO(); };
+
+Tag => enum(u8) {
+	nil, illegal,
+	number, ident,
+	plus, minus, eq,
+	newline,
 };
 
-.lex := (src'mut: &[64]u8) -> Kind {
-	peek := fn {src := src} -> u8 :: src[0];
+# typedef enum: unsigned char {
+# 	LEX_TAG_NIL,
+# 	LEX_TAG_ILLEGAL,
+# 	LEX_TAG_NUMBER,
+# 	LEX_TAG_IDENT,
+# 	LEX_TAG_PLUS,
+# 	LEX_TAG_MINUS,
+# 	LEX_TAG_EQ,
+# 	LEX_TAG_NEWLINE,
+# } Lex_Tag;
 
-	skip := () -> u8 {
+Token => struct { pos: u32, len: u24, tag: Tag };
+
+next => proc { lexer: &Lexer'mut } -> { token: Token } :: {
+	token'mut { pos, len, tag } := Token { pos: 10, len: 1, tag: .number };
+	ret token;
+};
+
+
+lex => proc { src'mut: &[64]u8 } -> { kind: Kind } :: {
+	peek => proc { s := src } -> u8 :: src[0];
+
+	skip => proc {} -> u8 {
 		b := peek!;
 		if b != 0 then src = &src[1..];
 		ret b;
 	};
 
-	eat := (b: u8) -> bool {
+	eat => proc { b: u8 } -> bool {
 		if peek() != b ret false;
 		skip(); ret true;
 	};
 
-	match peek() {
-		
+	if peek() {
+		a do ...,
+		b do ...,
+		else ...,
 	};
+
+	if a do b else c;
+
+	# ИЛИ
+
+	if peek() {
+		a do ...,
+		b do ...,
+		else ...,
+	};
+
+	if a do b else c;
 
 	if eat("-") {
 		if eat("=") ret .minus_eq;
@@ -82,4 +105,92 @@ lex := {
 	};
 
 	ret .ill;
+};
+
+fun => proc { case: @expr } -> @code(:expand) :: {
+	if cond {
+		a do b,
+		case do c,
+		else d,
+	};
+};
+
+Tag => enum { a, b, c, d };
+
+E => enum {
+	a(x: u8),
+	b(y: i8),
+	c(z: f8),
+};
+
+E => enum {
+	a { x: u8 },
+	b { y: i8 },
+	c { z: f8 },
+};
+
+e: E = ...;
+
+if .a(x) := e and x >= 0 do print("FOUND!\n");
+
+if .a { x } := e and x >= 0 do print("FOUND!\n");
+
+if   e == .a(x) and x == x0 do _
+elif e == .b(_) do _
+elif e == .c(_) do _
+else @unreachable(:static);
+
+# the same
+
+x0 := ...;
+
+if e {
+	.a(x) && x == x0 do print("x = {x}"),
+	.b(y) do print("y = {y}"),
+	.c(z) do print("z = {z}"),
+	else @unreachable(:static),
+};
+
+E => enum { a(x: u8), b(y: u8), c(z: f8) };
+
+e: E = ...;
+
+if e {
+	or .a(w)
+	or .b(w)
+	or .c(w)
+	if w != 0 do print("w = {w}") else print("w = illegal"),
+
+	or .d(v)
+	do print("v = {v}"),
+};
+
+if   e == or .a(w) or .b(w) or .c(w) if w != 0 do print("w = {w}") else print("w = illegal")
+elif e == or .d(v) do print("v = {v}")
+else @unreachable(:static);
+
+if a > 0 if a > 10 do _ elif a > 100 do _ else {}
+elif a < 0 do _
+else _;
+
+if number {
+	or 1
+	or 3
+	do _,
+	...,
+};
+
+Tag => enum {
+	eof, illegal,
+	number, ident,
+	plus, minus, star,
+};
+
+tag: Tag = ---;
+
+if tag {
+	.eof ret,
+	.illegal do @panic(...),
+	.number or .ident do ...,
+	.plus or .minus or .star do ...,
 };

@@ -1,3 +1,39 @@
-# lerp => { s: f32, e: f32, t: f32 } -> f32 :: s + (e - s) * t;
+std => @load("std.rk");
+main => {} :: std.print("Risk is here!");
 
-main => (1 +} :: (2 + 2);
+scale-mut: f32.&'mut = scale.&'mut;
+
+ref: f32.&'mut = val.&'mut;
+xs'mut: f32[_] = f32.[0] ** 64;
+
+# VS
+
+ref: &'mut f32 = val.&'mut;
+xs'mut: [_]f32 = f32.[0] ** 64;
+
+Bump => struct {
+	beg: &'mut [?]u8,
+	pos: &'mut [?]u8,
+	end: &'mut [?]u8,
+};
+
+bump.beg.* *= 1;
+
+scale-mut[0] *= 1.1;
+# vec[0] *= 1.1;
+# vec[1] *= 1.1;
+# vec[N] *= 1.1;
+
+scale-mut.* *= 1.1;
+
+ws: f16[32][32].&'mut;
+
+ws: &'mut [32][32]f16;
+
+Parser <| type {
+	expr => { parser: Parser.&'mut } :: {};
+
+
+
+	expr => { parser: &'mut Parser } :: {};
+};

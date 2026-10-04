@@ -62,7 +62,7 @@ next => proc {
 };
 
 load => proc { path: &[]u8 } -> type :: {
-	buf := File.load(path) match {
+	buf := match File.load(path) {
 		.ok { buf } => buf,
 		.err { x } => @error("..."),
 		# ...
@@ -336,7 +336,7 @@ For <| impl {
 	};
 };
 
-for: fn {
+f: proc {
 	(          end: usz, step: usz = 1) -> For,
 	(beg: usz, end: usz, step: usz = 1) -> For,
 } = fn {
