@@ -1,6 +1,7 @@
 #ifndef STD_MEM_BUMP_H
 #define STD_MEM_BUMP_H
 
+#include "std/mem/core.h"
 #include "std/mem/cur.h"
 #include "std/mem/page.h"
 
@@ -39,7 +40,7 @@ Bump bump_init(Pages * pages);
 // |================================================================================================|
 // |> [Bump]: alloc                                                                                 |
 
-Reg bump_raw(Bump * bump, u64 size, u64 align);
+uptr bump_raw(Bump * bump, u64 size, u64 align);
 
 // |================================================================================================|
 // |> [Bump]: alloc wrappers                                                                        |

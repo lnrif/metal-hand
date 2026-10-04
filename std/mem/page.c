@@ -4,6 +4,7 @@
 #include "std/mem/core.h"
 #include "std/mem/cur.h"
 #include "std/mem/reg.h"
+#include "std/stream/core.h"
 
 #if LINUX
 	#include "linux/map.h"
@@ -149,105 +150,221 @@ b8 pages_read_exec(Reg reg)  { return set_prot(reg.ptr, reg.ptr + reg.len, PAGES
 Reg pages_alloc_api(void * ctx, Reg reg, RegReq req) {
 	Pages * ps = ctx;
 	if (ps == 0 || !ps->is_valid) return REG_NIL;
+	if (req.len == 0) return REG_NIL;
+
+	uptr const page = pages_align_atom();
 
 	if (!reg.is_valid) {
-		if (req.len == 0) return REG_NIL;
-
 		uptr const ptr = pages_raw(ps, req.len, req.align);
 		if (ptr == 0) return REG_NIL;
 
-		uptr const page = pages_align_atom();
 		uptr const page_beg = ptr & ~(page - 1);
 		uptr const page_end = mem_align_up(ptr + req.len, page);
-		u64  const page_len = page_end - page_beg;
+		if (page_end > ps->end) return REG_NIL;
+		if (!pages_read_write(REG(page_beg, page_end - page_beg))) return REG_NIL;
 
-		if (!pages_read_write(REG(page_beg, page_len))) return REG_NIL;
-		return REG(ptr, req.len);
+		ps->pos = page_end;
+		return REG(ptr, page_end - ptr);
 	};
 
 	uptr const reg_end = reg.ptr + reg.len;
+	if (reg.ptr < ps->beg || reg_end != ps->pos) return REG_NIL;
+	if (req.len <= reg.len) return reg;
+	if (req.len > ps->end - reg.ptr) return REG_NIL;
 
-	if (req.dir == REG_DIR_UP) {
-		if (reg_end == ps->cur.pos) {
-			if (req.len == 0) {
-				ps->cur.pos = reg.ptr;
-				return REG_NIL;
-			};
+	uptr const new_end = mem_align_up(reg.ptr + req.len, page);
+	if (new_end > ps->end) return REG_NIL;
 
-			if (req.len <= reg.len) {
-				ps->cur.pos = reg.ptr + req.len;
-				return REG(reg.ptr, req.len);
-			};
+	if (!pages_read_write(REG(reg_end, new_end - reg_end))) return REG_NIL;
 
-			u64 const extra_len = req.len - reg.len;
-			uptr const new_pos = reg_end + extra_len;
-			if (new_pos <= ps->cur.end) {
-				uptr const page = pages_align_atom();
-				uptr const current_page_end = mem_align_up(reg_end, page);
-				uptr const new_page_end     = mem_align_up(new_pos, page);
-
-				if (new_page_end > current_page_end) {
-					Reg extra_zone = REG(current_page_end, new_page_end - current_page_end);
-					if (!pages_read_write(extra_zone)) return REG_NIL;
-				};
-
-				ps->cur.pos = new_pos;
-				return REG(reg.ptr, req.len);
-			};
-		};
-	} else {
-		if (reg.ptr == ps->cur.pos) {
-			if (req.len == 0) {
-				ps->cur.pos = reg_end;
-				return REG_NIL;
-			};
-
-			if (req.len <= reg.len) {
-				u64 const shrink_len = reg.len - req.len;
-				ps->cur.pos = reg.ptr + shrink_len;
-				return REG(ps->cur.pos, req.len);
-			};
-
-			u64 const extra_len = req.len - reg.len;
-			if (ps->cur.pos >= ps->beg + extra_len) {
-				uptr const new_pos = ps->cur.pos - extra_len;
-				uptr const page = pages_align_atom();
-				uptr const current_page_beg = reg.ptr & ~(page - 1);
-				uptr const new_page_beg     = new_pos & ~(page - 1);
-
-				if (new_page_beg < current_page_beg) {
-					Reg extra_zone = REG(new_page_beg, current_page_beg - new_page_beg);
-					if (!pages_read_write(extra_zone)) return REG_NIL;
-				};
-
-				ps->cur.pos = new_pos;
-				return REG(new_pos, req.len);
-			};
-		};
-	};
-
-	if (req.len == 0) return REG_NIL;
-
-	uptr const new_ptr = pages_raw(ps, req.len, req.align);
-	if (new_ptr == 0) return REG_NIL;
-
-	uptr const page = pages_align_atom();
-	uptr const page_beg = new_ptr & ~(page - 1);
-	uptr const page_end = mem_align_up(new_ptr + req.len, page);
-	u64  const page_len = page_end - page_beg;
-
-	if (!pages_read_write(REG(page_beg, page_len))) return REG_NIL;
-
-	u64 const copy_len = reg.len < req.len ? reg.len : req.len;
-	if (req.dir == REG_DIR_UP) {
-		memcpy((void*)new_ptr, (void*)reg.ptr, copy_len);
-	} else {
-		u64 const offset = req.len - copy_len;
-		memcpy((void*)(new_ptr + offset), (void*)reg.ptr, copy_len);
-	};
-
-	return REG(new_ptr, req.len);
+	ps->pos = new_end;
+	return REG(reg.ptr, new_end - reg.ptr);
 };
+
+// Reg pages_alloc_api(void * ctx, Reg reg, RegReq req) {
+// 	Pages * ps = ctx;
+// 	if (ps == 0 || !ps->is_valid) return REG_NIL;
+// 	if (req.len == 0) return REG_NIL;
+//
+// 	uptr const page = pages_align_atom();
+//
+// 	if (!reg.is_valid) {
+// 		uptr const ptr = pages_raw(ps, req.len, req.align);
+// 		if (ptr == 0) return REG_NIL;
+//
+// 		uptr const page_beg = ptr & ~(page - 1);
+// 		uptr const page_end = mem_align_up(ptr + req.len, page);
+// 		if (!pages_read_write(REG(page_beg, page_end - page_beg))) return REG_NIL;
+//
+// 		return REG(ptr, req.len);
+// 	};
+//
+// 	uptr const reg_end = reg.ptr + reg.len;
+// 	if (reg.ptr < ps->beg || reg_end != ps->pos) return REG_NIL;
+// 	if (req.len <= reg.len) return reg;
+// 	if (req.len > ps->end - reg.ptr) return REG_NIL;
+//
+// 	uptr const new_pos       = reg.ptr + req.len;
+// 	uptr const cur_page_end  = mem_align_up(reg_end, page);
+// 	uptr const new_page_end  = mem_align_up(new_pos, page);
+//
+// 	if (new_page_end > cur_page_end && !pages_read_write(REG(cur_page_end, new_page_end - cur_page_end))) return REG_NIL;
+//
+// 	ps->pos = new_pos;
+// 	return REG(reg.ptr, req.len);
+// };
+
+// Reg pages_alloc_api(void * ctx, Reg reg, RegReq req) {
+// 	Stream out = stream_error();
+// 	Fmt fmt = FMT_ON_STACK(KB(1), FMT_SET_TEXT);
+//
+// 	Pages * ps = ctx;
+// 	if (ps == 0 || !ps->is_valid) goto fail;
+//
+// 	FMT(&fmt,
+// 		FMT_LIT("\n"), FMT_REPEAT('=', 60), FMT_LIT("\n"),
+// 		FMT_LIT("ps  = "),
+// 		FMT_LIT("{ pos: "), FMT_U64(ps->beg),
+// 		FMT_LIT(", cur: "), FMT_U64(ps->pos - ps->beg),
+// 		FMT_LIT(", len: "), FMT_U64(ps->end - ps->beg),
+// 		FMT_LIT(" }\n"),
+// 		FMT_LIT("reg = { pos: "), FMT_U64(reg.ptr), FMT_LIT(", len: "), FMT_U64(reg.len),           FMT_LIT(" }"),
+// 		FMT_LIT("\n"), FMT_REPEAT('=', 60), FMT_LIT("\n"),
+// 	);
+//
+// 	if (ps == 0 || !ps->is_valid) goto fail;
+// 	// if (reg.len <= req.len) return reg;
+//
+//  	if (reg.is_valid) {
+//  		b8 const in_bound = ps->beg <= reg.ptr && reg.ptr + reg.len <= ps->pos;
+//  		b8 const is_last_reg = reg.ptr + reg.len == ps->pos;
+//  		if (!in_bound || !is_last_reg) goto fail;
+//  	};
+//
+// 	Pages const new = pages_chop(ps, req.len - reg.len, req.align);
+// 	if (!new.is_valid) goto fail;
+//
+// 	if (!pages_read_write(REG(new.beg, new.end - new.beg))) goto fail;
+// 	uptr const ptr = reg.ptr == 0 ? new.beg : reg.ptr;
+// 	Reg const res = REG(ptr, new.end - ptr);
+//
+// 	FMT(&fmt,
+// 		FMT_LIT("\n"), FMT_REPEAT('>', 60), FMT_LIT("\n"),
+// 		FMT_LIT("res = { pos: "), FMT_U64(res.ptr), FMT_LIT(", len: "), FMT_U64(res.len), FMT_LIT(" }"),
+// 		FMT_LIT("\n"), FMT_REPEAT('>', 60), FMT_LIT("\n"),
+// 	);
+//
+// 	stream_write_str(&out, fmt_as_str(&fmt));
+// 	return res;
+// fail:
+//
+// 	FMT(&fmt,
+// 		FMT_LIT("\n"), FMT_REPEAT('>', 60), FMT_LIT("\n"),
+// 		FMT_LIT("res = { pos: "), FMT_U64(res.ptr), FMT_LIT(", len: "), FMT_U64(res.len), FMT_LIT(" }"),
+// 		FMT_LIT("\n"), FMT_REPEAT('>', 60), FMT_LIT("\n"),
+// 	);
+//
+// 	stream_write_str(&out, fmt_as_str(&fmt));
+// 	return REG_NIL;
+//
+// 	// if (!reg.is_valid) {
+// 	// 	if (req.len == 0) return REG_NIL;
+// 	//
+// 	// 	uptr const ptr = pages_raw(ps, req.len, req.align);
+// 	// 	if (ptr == 0) return REG_NIL;
+// 	//
+// 	// 	uptr const page = pages_align_atom();
+// 	// 	uptr const page_beg = ptr & ~(page - 1);
+// 	// 	uptr const page_end = mem_align_up(ptr + req.len, page);
+// 	// 	u64  const page_len = page_end - page_beg;
+// 	//
+// 	// 	if (!pages_read_write(REG(page_beg, page_len))) return REG_NIL;
+// 	// 	return REG(ptr, req.len);
+// 	// };
+// 	//
+// 	// uptr const reg_end = reg.ptr + reg.len;
+// 	//
+// 	// if (req.dir == REG_DIR_UP) {
+// 	// 	if (reg_end == ps->cur.pos) {
+// 	// 		if (req.len == 0) {
+// 	// 			ps->cur.pos = reg.ptr;
+// 	// 			return REG_NIL;
+// 	// 		};
+// 	//
+// 	// 		if (req.len <= reg.len) {
+// 	// 			ps->cur.pos = reg.ptr + req.len;
+// 	// 			return REG(reg.ptr, req.len);
+// 	// 		};
+// 	//
+// 	// 		u64 const extra_len = req.len - reg.len;
+// 	// 		uptr const new_pos = reg_end + extra_len;
+// 	// 		if (new_pos <= ps->cur.end) {
+// 	// 			uptr const page = pages_align_atom();
+// 	// 			uptr const current_page_end = mem_align_up(reg_end, page);
+// 	// 			uptr const new_page_end     = mem_align_up(new_pos, page);
+// 	//
+// 	// 			if (new_page_end > current_page_end) {
+// 	// 				Reg extra_zone = REG(current_page_end, new_page_end - current_page_end);
+// 	// 				if (!pages_read_write(extra_zone)) return REG_NIL;
+// 	// 			};
+// 	//
+// 	// 			ps->cur.pos = new_pos;
+// 	// 			return REG(reg.ptr, req.len);
+// 	// 		};
+// 	// 	};
+// 	// } else {
+// 	// 	if (reg.ptr == ps->cur.pos) {
+// 	// 		if (req.len == 0) {
+// 	// 			ps->cur.pos = reg_end;
+// 	// 			return REG_NIL;
+// 	// 		};
+// 	//
+// 	// 		if (req.len <= reg.len) {
+// 	// 			u64 const shrink_len = reg.len - req.len;
+// 	// 			ps->cur.pos = reg.ptr + shrink_len;
+// 	// 			return REG(ps->cur.pos, req.len);
+// 	// 		};
+// 	//
+// 	// 		u64 const extra_len = req.len - reg.len;
+// 	// 		if (ps->cur.pos >= ps->beg + extra_len) {
+// 	// 			uptr const new_pos = ps->cur.pos - extra_len;
+// 	// 			uptr const page = pages_align_atom();
+// 	// 			uptr const current_page_beg = reg.ptr & ~(page - 1);
+// 	// 			uptr const new_page_beg     = new_pos & ~(page - 1);
+// 	//
+// 	// 			if (new_page_beg < current_page_beg) {
+// 	// 				Reg extra_zone = REG(new_page_beg, current_page_beg - new_page_beg);
+// 	// 				if (!pages_read_write(extra_zone)) return REG_NIL;
+// 	// 			};
+// 	//
+// 	// 			ps->cur.pos = new_pos;
+// 	// 			return REG(new_pos, req.len);
+// 	// 		};
+// 	// 	};
+// 	// };
+// 	//
+// 	// if (req.len == 0) return REG_NIL;
+// 	//
+// 	// uptr const new_ptr = pages_raw(ps, req.len, req.align);
+// 	// if (new_ptr == 0) return REG_NIL;
+// 	//
+// 	// uptr const page = pages_align_atom();
+// 	// uptr const page_beg = new_ptr & ~(page - 1);
+// 	// uptr const page_end = mem_align_up(new_ptr + req.len, page);
+// 	// u64  const page_len = page_end - page_beg;
+// 	//
+// 	// if (!pages_read_write(REG(page_beg, page_len))) return REG_NIL;
+// 	//
+// 	// u64 const copy_len = reg.len < req.len ? reg.len : req.len;
+// 	// if (req.dir == REG_DIR_UP) {
+// 	// 	memcpy((void*)new_ptr, (void*)reg.ptr, copy_len);
+// 	// } else {
+// 	// 	u64 const offset = req.len - copy_len;
+// 	// 	memcpy((void*)(new_ptr + offset), (void*)reg.ptr, copy_len);
+// 	// };
+// 	//
+// 	// return REG(new_ptr, req.len);
+// };
 
 Reg pages_no_state_api(void * ctx, Reg reg, RegReq req) {
 	UNUSED(ctx);

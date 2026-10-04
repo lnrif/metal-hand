@@ -6,6 +6,12 @@
 // |================================================================================================|
 // |> LIBC BUILTINS                                                                                 |
 
+#define mem_slice_init(ptr, count, value) \
+	do { \
+		if ((ptr) == 0) break; \
+		for (u64 i = 0; i < (count); i += 1) (ptr)[i] = (value); \
+	} while (0)
+
 void * memset (void * dst, u8 byte, u64 len);
 void * memcpy (void * dst, void const * src, u64 len);
 void * memmove(void * dst, void const * src, u64 len);
