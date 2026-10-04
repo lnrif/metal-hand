@@ -17,6 +17,8 @@ typedef struct {
 	Fmt * paths; ArgsCmdBuild args;
 } RkBuild;
 
+#define PARSER_ERROR_LIMIT 5
+
 b8 rk_build(RkBuild build) {
 	u8 res = 0;
 
@@ -52,6 +54,7 @@ b8 rk_build(RkBuild build) {
 		FMT_WHITE, FMT_LIT("read file "),
 		FMT_CYAN, FMT_LIT("'"), FMT_STR(build_input.str), FMT_LIT("'"), FMT_LIT("\n"),
 		FMT_BLUE, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_LIT("\n"),
 	);
 
 	u32 DELIM_SIZE = 36;
@@ -96,16 +99,31 @@ b8 rk_build(RkBuild build) {
 		);
 	};
 
-	Pages ast_pages = pages_reserve(GB(1)); if (!file_pages.is_valid) {
+	Pages nodes_pages = pages_reserve(MB(256)); if (!nodes_pages.is_valid) {
 		stream_write_lit(build.out,
 			ANSI_BOLD ANSI_RED "[f] "
-			ANSI_WHITE "failed to reserve pages for formatter" "\n"
+			ANSI_WHITE "failed to reserve pages for AST nodes" "\n"
 			ANSI_RESET
 		);
 		proc_exit(255);
 	};
 
-	Parser parser = parser_init((Src){.str = buf.str, .path = build_input.str}, build.fmt, &ast_pages);
+	Pages tmp_pages = pages_reserve(MB(2)); if (!tmp_pages.is_valid) {
+		stream_write_lit(build.out,
+			ANSI_BOLD ANSI_RED "[f] "
+			ANSI_WHITE "failed to reserve pages for temporary needs" "\n"
+			ANSI_RESET
+		);
+		proc_exit(255);
+	};
+
+
+	Parser parser = parser_init(
+		(Src){.str = buf.str, .path = build_input.str},
+		build.fmt, &nodes_pages, &tmp_pages,
+		PARSER_ERROR_LIMIT
+	);
+
 	Ast ast = parser_parse(&parser);
 
 	if (build.args.ast) ast_fmt(build.fmt, &ast, ast.root);
@@ -114,7 +132,8 @@ b8 rk_build(RkBuild build) {
 		FMT_BLUE, FMT_LIT("[I] "),
 		FMT_WHITE, FMT_LIT("write file "),
 		FMT_CYAN, FMT_LIT("'"), FMT_STR(build_output.str), FMT_LIT("'"), FMT_LIT("\n"),
-		FMT_BLUE, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC), FMT_RESET,
+		FMT_BLUE, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_LIT("\n"), FMT_RESET,
 	);
 
 exit:
