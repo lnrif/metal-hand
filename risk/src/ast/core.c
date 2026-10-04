@@ -63,7 +63,8 @@ Str ast_name(AstTag tag) {
 	
 		case AST_T_IF_ELSE: return S("if a then b else c");
 		case AST_T_SEQ: return S("a, b, ...");
-		case AST_T_CALL: return S("f(a, b, ...)");
+		case AST_T_CALL_PREFIX: return S("f(a, b, ...)");
+		case AST_T_CALL_POSTFIX: return S("(a, b, ...)f");
 	};
 
 	return S("UNKNOWN");
@@ -72,8 +73,8 @@ Str ast_name(AstTag tag) {
 // |================================================================================================|
 // |> AST POOL                                                                                      |
 
-Ast ast_init(Pages * pages, Src src) {
-	return (Ast){.src = src, .bump = bump_init(pages), .root = AST_IDX_NIL};
+Ast ast_init(Pages * nodes, Src src) {
+	return (Ast){.src = src, .nodes = bump_init(nodes), .root = AST_IDX_NIL};
 };
 
 void ast_free(Ast * ast) {
@@ -81,6 +82,6 @@ void ast_free(Ast * ast) {
 };
 
 void * ast_node(Ast * ast, u64 size) {
-	return bump_raw(&ast->bump, size, 4).any;
+	return (void*)bump_raw(&ast->nodes, size, 4);
 };
 

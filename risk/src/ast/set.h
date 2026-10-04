@@ -13,13 +13,16 @@
 	X(MINUS, SUB) \
 	X(STAR, MUL) \
 	X(SLASH, DIV) \
+	\
 	X(COLON, COLON) \
 	X(EQ, SET) \
 	X(COLON_EQ, DEF) \
+	\
 	X(EQ_GT, IMPLIES) \
 	X(MINUS_GT, ARROW) \
 	X(COLON_COLON, EXTEND) \
 	X(LT_OR, APPLY) \
+	\
 	X(DOT, DOT) \
 	X(TICK, TICK) \
 	\
@@ -36,6 +39,18 @@
 
 // #define X(TOKEN)
 #define LEX_PIVOT(X) \
+	X(PAREN_OPEN) \
+	X(BRACE_OPEN) \
+	X(BRACKET_OPEN) \
+	X(PAREN_CLOSE) \
+	X(BRACE_CLOSE) \
+	X(BRACKET_CLOSE) \
+	\
+	X(SEMI) \
+	X(COLON) \
+
+// #define X(TOKEN)
+#define LEX_EXPR(X) \
 	X(IDENT) \
 	X(NUMBER) \
 	X(STRING) \
@@ -48,9 +63,6 @@
 	X(PAREN_OPEN) \
 	X(BRACE_OPEN) \
 	X(BRACKET_OPEN) \
-	X(PAREN_CLOSE) \
-	X(BRACE_CLOSE) \
-	X(BRACKET_CLOSE) \
 	\
 	X(IF) \
 
@@ -62,5 +74,6 @@
 
 AstBound lex_into_bound(LexTag tag);
 b8 lex_is_pivot(LexTag tag);
+b8 lex_is_expr(LexTag tag);
 
 #endif // !RK_AST_SET_H

@@ -20,3 +20,13 @@ b8 lex_is_pivot(LexTag tag) {
 	};
 };
 
+b8 lex_is_expr(LexTag tag) {
+	switch (tag) {
+		#define X(TOKEN) case LEX_T_##TOKEN:
+		LEX_EXPR(X)
+		#undef X
+			return true;
+		default: return false;
+	};
+};
+

@@ -111,8 +111,11 @@ typedef enum: u8 {
 	// f(a, b, ...) / f(a; b; ...)
 	// f[a, b, ...] / f[a; b; ...]
 	// f{a, b, ...} / f{a; b; ...}
-	// f.{a, b, ...} / f.{a; b; ...}
-	AST_T_CALL,
+	AST_T_CALL_POSTFIX,
+	// (a, b, ...)f / (a; b; ...)f
+	// [a, b, ...]f / [a; b; ...]f
+	// {a, b, ...}f / {a; b; ...}f
+	AST_T_CALL_PREFIX,
 } AstTag;
 
 // if x > 0 then x else x * 0.05
@@ -162,39 +165,42 @@ typedef enum: u8 {
 	AST_B_POISON  = 0b100,
 } AstBound;
 
-// typedef u8 AstSeqTag;
-//
-// static inline AstSeqTag ast_seq_tag(AstDelim delim, AstBound bound) {
-// 	return (AstSeqTag){};
-// };
-
 typedef struct ALIGNED(AST_NODE_ALIGN) {
 	AstTag tag; AstBound bound; AstDelim delim; u8 _BAD_PAD[1];
 	u32 pos_open; u32 pos_close;
 	u32 count; AstIdx idx[];
 } AstSeq;
 
+typedef union ALIGNED(AST_NODE_ALIGN) {
+	AstSeq seq;
+	struct {
+		AstTag tag; AstBound bound; AstDelim delim; u8 _BAD_PAD[1];
+		u32 pos_open; u32 pos_close;
+		u32 count; AstIdx idx[];
+	};
+} AstCall;
+
 // |================================================================================================|
 // |> AST POOL                                                                                      |
 
+#define AST_IDX_AS_PTR(ast, idx) (uptr)((ast)->nodes.beg + AST_NODE_ALIGN * (idx))
+#define AST_PTR_AS_IDX(ast, ptr) ((AstIdx)(((uptr)ptr) - (ast)->nodes.beg) / AST_NODE_ALIGN)
+
 typedef struct {
-	// TODO: combine pages + bump in bump
 	Src src;
-	Bump bump;
+	Bump nodes;
 	AstIdx root;
 } Ast;
 
-Ast ast_init(Pages * pages, Src src);
+Ast ast_init(Pages * nodes, Src src);
 void ast_free(Ast * ast);
 
 void * ast_node(Ast * ast, u64 size);
 
-// AstIdx ast_alloc_ex(Ast * ast, u64 size);
-
 #define ast_alloc(ast, node...) ({ \
 	typeof(node) * _ptr = ast_node(ast, sizeof(typeof(node))); \
 	if (_ptr != 0) *_ptr = node; \
-	(_ptr == 0) ? AST_IDX_NIL : ((AstIdx)(((uptr)_ptr) - (ast)->bump.beg) / AST_NODE_ALIGN); \
+	(_ptr == 0) ? AST_IDX_NIL : AST_PTR_AS_IDX(ast, _ptr); \
 })
 
 #endif // !RK_AST_H

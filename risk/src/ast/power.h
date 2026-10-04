@@ -30,14 +30,14 @@
 typedef enum: u8 {
 	PARSE_POWER_NIL,
 
-	// if a
-	PARSE_POWER_PREFIX_IF,
-	// a then b
-	PARSE_POWER_LHS(THEN),
-		// a elif b
-		PARSE_POWER_INFIX_AS(THEN, ELIF),
-		// a else b
-		PARSE_POWER_INFIX_AS(THEN, ELSE),
+	// // if a
+	// PARSE_POWER_PREFIX_IF,
+	// // a then b
+	// PARSE_POWER_LHS(THEN),
+	// 	// a elif b
+	// 	PARSE_POWER_INFIX_AS(THEN, ELIF),
+	// 	// a else b
+	// 	PARSE_POWER_INFIX_AS(THEN, ELSE),
 
 	// a = b = c; a = (b = c)
 	PARSE_POWER_RHS(SET),
@@ -125,7 +125,7 @@ typedef enum: u8 {
 	//      ^ no dot here
 	PARSE_POWER_CALL_DOT_BRACES = PARSE_POWER_CALL_PARENS,
 
-	// a.b.c; (a.b).c
+		// a.b.c; (a.b).c
 	PARSE_POWER_LHS(DOT),
 		// a'b'c; (a'b)'c
 		PARSE_POWER_INFIX_AS(DOT, TICK),

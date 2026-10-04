@@ -1,5 +1,6 @@
 #include "risk/src/ast/fmt.h"
 #include "risk/src/ast/core.h"
+#include "risk/src/ast/set.h"
 #include "risk/src/src/core.h"
 #include "std/flow/core.h"
 #include "std/fmt/core.h"
@@ -7,13 +8,76 @@
 #define DEPTH_STEP 3
 
 void ast_fmt_ex(
-	Fmt * fmt,
-	Ast const * ast,
-	AstIdx idx,
-	u16 depth,
+	Fmt * fmt, Ast const * ast,
+	AstIdx idx, u16 depth,
+	u32 num, u8 width
+);
+
+typedef enum: u8 {
+	AST_FMT_SEQ,
+	AST_FMT_SEQ_PREFIX,
+	AST_FMT_SEQ_POSTFIX,
+} AstFmtSeq;
+
+void ast_fmt_seq(
+	Fmt * fmt, Ast const * ast,
+	AstIdx idx, u16 depth, AstFmtSeq kind
+) {
+	uptr const head = AST_IDX_AS_PTR(ast, idx);
+	AstSeq const * seq = (void*)head;
+
+	u64 x = seq->count;
+	u8 w = 0; for (;;) {
+		w += 1;
+		x /= 10;
+		if (x == 0) break;
+	};
+
+	Str lex; switch (seq->delim) {
+		case AST_D_NONE:  lex = S("a b ..."); break;
+		case AST_D_COMMA: lex = S("a, b, ..."); break;
+		case AST_D_SEMI:  lex = S("a; b; ..."); break;
+		default: PANIC("unhandled kind [seq->delim]");
+	};
+
+	Str open; Str close; switch (seq->bound) {
+		case AST_B_EOF:     open = S("<("); close = S(")>"); break;
+		case AST_B_PAREN:   open = S( "("); close = S(")" ); break;
+		case AST_B_BRACE:   open = S( "{ "); close = S(" }" ); break;
+		case AST_B_BRACKET: open = S( "["); close = S("]" ); break;
+		default: PANIC("unhandled kind [seq->bound]");
+	};
+
+	Str prefix; Str postfix; switch (kind) {
+		case AST_FMT_SEQ: prefix = S(""); postfix = S(""); break;
+		case AST_FMT_SEQ_PREFIX: prefix = S(""); postfix = S("f"); break;
+		case AST_FMT_SEQ_POSTFIX: prefix = S("g"); postfix = S(""); break;
+	};
+
+	Str const pad = kind != AST_FMT_SEQ && seq->bound == AST_B_BRACE ? S(" ") : S("");
+	FMT(fmt,
+		FMT_ORANGE,
+		FMT_STR(prefix), FMT_STR(pad),
+		FMT_STR(open), FMT_STR(lex), FMT_STR(close),
+		FMT_STR(pad), FMT_STR(postfix),
+	);
+
+	FMT(fmt, FMT_LIT("\n"));
+	if (kind != AST_FMT_SEQ) ast_fmt_ex(fmt, ast, seq->idx[seq->count], depth + 1, 0, w);
+
+	for (u32 i = 0; i < seq->count; i += 1) {
+		ast_fmt_ex(fmt, ast, seq->idx[i], depth + 1, i + (kind != AST_FMT_SEQ ? 1 : 0), w);
+	};
+
+	// FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
+};
+
+void ast_fmt_ex(
+	Fmt * fmt, Ast const * ast,
+	AstIdx idx, u16 depth,
 	u32 num, u8 width
 ) {
-	uptr const head = ast->bump.beg + AST_NODE_ALIGN * idx;
+	uptr const head = AST_IDX_AS_PTR(ast, idx);
 	AstTag const * tag = (void*)head;
 
 	FMT(fmt,
@@ -59,34 +123,39 @@ void ast_fmt_ex(
 
 			FMT(fmt,
 				FMT_ORANGE, FMT_LIT("`"), FMT_STR(lex), FMT_LIT("` "),
-				FMT_GREY, FMT_LIT("("), FMT_LIT("\n"),
+				// FMT_GREY, FMT_LIT("("),
+				FMT_LIT("\n"),
 			);
 
 			ast_fmt_ex(fmt, ast, una->node, depth + 1, 0, 1);
-			FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
-			FMT(fmt, FMT_GREY, FMT_LIT(")"), FMT_LIT("\n"));
+			// FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
+			// FMT(fmt, FMT_GREY, FMT_LIT(")"), FMT_LIT("\n"));
 		} break;
 
-		case AST_T_BIN_ADD:
-		case AST_T_BIN_SUB:
-		case AST_T_BIN_MUL:
-		case AST_T_BIN_DIV:
-
-		case AST_T_BIN_DOT:
-		case AST_T_BIN_TICK:
-
-		case AST_T_BIN_COLON:
-		case AST_T_BIN_SET:
-		case AST_T_BIN_DEF:
-
-		case AST_T_BIN_ARROW:
-		case AST_T_BIN_IMPLIES:
-		case AST_T_BIN_EXTEND:
-		case AST_T_BIN_APPLY:
-
+#define X(TOKEN, NODE) case AST_T_BIN_##NODE:
+		// case AST_T_BIN_ADD:
+		// case AST_T_BIN_SUB:
+		// case AST_T_BIN_MUL:
+		// case AST_T_BIN_DIV:
+		//
+		// case AST_T_BIN_DOT:
+		// case AST_T_BIN_TICK:
+		//
+		// case AST_T_BIN_COLON:
+		// case AST_T_BIN_SET:
+		// case AST_T_BIN_DEF:
+		//
+		// case AST_T_BIN_ARROW:
+		// case AST_T_BIN_IMPLIES:
+		// case AST_T_BIN_EXTEND:
+		// case AST_T_BIN_APPLY:
+		//
 		// case AST_T_BIN_THEN:
 		// case AST_T_BIN_ELIF:
 		// case AST_T_BIN_ELSE:
+
+		LEX_AST_INFIX(X)
+#undef X
 		{
 			AstBin const * bin = (void*)head;
 
@@ -99,60 +168,11 @@ void ast_fmt_ex(
 
 			ast_fmt_ex(fmt, ast, bin->lhs, depth + 1, 0, 1);
 			ast_fmt_ex(fmt, ast, bin->rhs, depth + 1, 1, 1);
-
-			// FMT(fmt, FMT_LIT("", .width = depth * DEPTH_STEP));
 		} break;
 
-		case AST_T_SEQ: {
-			AstSeq const * seq = (void*)head;
-			
-			u64 x = seq->count;
-			u8 w = 0; for (;;) {
-				w += 1;
-				x /= 10;
-				if (x == 0) break;
-			};
-
-			Str lex; switch (seq->delim) {
-				case AST_D_NONE:  lex = S("seq.none"); break;
-				case AST_D_COMMA: lex = S("seq.comma"); break;
-				case AST_D_SEMI:  lex = S("seq.semi"); break;
-				default: PANIC("unhandled kind [seq->delim]");
-			};
-
-			Str open; Str close; switch (seq->bound) {
-				case AST_B_EOF:     open = S("<("); close = S(")>"); break;
-				case AST_B_PAREN:   open = S( "("); close = S(")" ); break;
-				case AST_B_BRACE:   open = S( "{"); close = S("}" ); break;
-				case AST_B_BRACKET: open = S( "["); close = S("]" ); break;
-				default: PANIC("unhandled kind [seq->bound]");
-			};
-
-			FMT(fmt,
-				FMT_BLUE, FMT_STR(lex),
-				// FMT_COLOR(FMT_RED), FMT_U64(seq->node_seq.delim_and_bound, .width = 10, .num = FMT_NUM_BIN | FMT_NUM_FILL),
-				FMT_GREY, FMT_LIT(" "), FMT_STR(open),
-			);
-
-			if (seq->count != 0) {
-				FMT(fmt, FMT_LIT("\n"));
-
-				for (u16 i = 0;; i += 1) {
-					if (seq->count == 0 || i >= seq->count - 1) break;
-					ast_fmt_ex(fmt, ast, seq->idx[i], depth + 1, i, w);
-					// fmt_write(fmt, FMT_COLOR(FMT_GREY), FMT_LINE);
-				};
-
-				if (seq->count >= 1) {
-					u32 const i = seq->count - 1;
-					ast_fmt_ex(fmt, ast, seq->idx[i], depth + 1, i, w);
-				};
-
-				FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
-			};
-
-			FMT(fmt, FMT_GREY, FMT_STR(close), FMT_LIT("\n"));
-		} break;
+		case AST_T_SEQ:          ast_fmt_seq(fmt, ast, idx, depth, AST_FMT_SEQ); break;
+		case AST_T_CALL_PREFIX:  ast_fmt_seq(fmt, ast, idx, depth, AST_FMT_SEQ_PREFIX); break;
+		case AST_T_CALL_POSTFIX: ast_fmt_seq(fmt, ast, idx, depth, AST_FMT_SEQ_POSTFIX); break;
 
 		// case AST_T_CALL: {
 		// 	AstCall const * call = (void*)head;
