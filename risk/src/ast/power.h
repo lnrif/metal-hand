@@ -30,6 +30,9 @@
 typedef enum: u8 {
 	PARSE_POWER_NIL,
 
+	// |> a
+	PARSE_POWER_PREFIX_UNPOS,
+
 	// // if a
 	// PARSE_POWER_PREFIX_IF,
 	// // a then b
@@ -45,6 +48,14 @@ typedef enum: u8 {
 		PARSE_POWER_INFIX_AS(SET, DEF),
 		// a => b => c; a => (b => c)
 		PARSE_POWER_INFIX_AS(SET, IMPLIES),
+		// a += b += c; a += (b += c)
+		PARSE_POWER_INFIX_AS(SET, SET_ADD),
+		// a -= b -= c; a -= (b -= c)
+		PARSE_POWER_INFIX_AS(SET, SET_SUB),
+		// a *= b *= c; a *= (b *= c)
+		PARSE_POWER_INFIX_AS(SET, SET_MUL),
+		// a /= b /= c; a /= (b /= c)
+		PARSE_POWER_INFIX_AS(SET, SET_DIV),
 
 	// a <| b <| c; a <| (b <| c)
 	PARSE_POWER_RHS(APPLY),

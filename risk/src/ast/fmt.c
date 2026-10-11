@@ -1,5 +1,4 @@
 #include "risk/src/ast/fmt.h"
-#include "risk/src/ast/core.h"
 #include "risk/src/ast/set.h"
 #include "risk/src/src/core.h"
 #include "std/flow/core.h"
@@ -117,6 +116,7 @@ void ast_fmt_ex(
 		case AST_T_UNA_DOT:
 		case AST_T_UNA_REF:
 		case AST_T_UNA_DEREF:
+		case AST_T_UNA_UNPOS:
 		{
 			AstUna const * una = (void*)head;
 			Str lex = str_sub(ast->src.str, una->pos, una->pos + una->len);

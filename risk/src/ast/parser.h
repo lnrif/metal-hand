@@ -2,7 +2,7 @@
 #define RK_AST_PARSER_H
 
 #include "risk/src/src/core.h"
-#include "risk/src/ast/core.h"
+#include "risk/src/ast/ast.h"
 #include "risk/src/lex/core.h"
 
 typedef struct {

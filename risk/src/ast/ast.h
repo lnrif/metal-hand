@@ -34,6 +34,8 @@ typedef enum: u8 {
 		AST_T_UNA_DEREF,
 		// a.&
 		AST_T_UNA_REF,
+		// |> a
+		AST_T_UNA_UNPOS,
 	AST_T_UNA_END,
 
 	AST_T_BIN_BEG = AST_T_UNA_END,
@@ -47,13 +49,13 @@ typedef enum: u8 {
 		AST_T_BIN_DIV,
 
 		// a += b
-		AST_T_BIN_ADD_SET,
+		AST_T_BIN_SET_ADD,
 		// a -= b
-		AST_T_BIN_SUB_SET,
+		AST_T_BIN_SET_SUB,
 		// a *= b
-		AST_T_BIN_MUL_SET,
+		AST_T_BIN_SET_MUL,
 		// a /= b
-		AST_T_BIN_DIV_SET,
+		AST_T_BIN_SET_DIV,
 
 		// a < b
 		AST_T_BIN_LT,

@@ -1,4 +1,4 @@
-#include "risk/src/ast/core.h"
+#include "risk/src/ast/ast.h"
 #include "risk/src/lex/core.h"
 #include "std/flow/core.h"
 #include "std/fmt/core.h"
@@ -82,12 +82,14 @@ inline AstIdx parser_sequence(Parser * parser, b8 file) {
 			} else if (parser->peek.tag == LEX_T_SEMI)  {
 				delim_token = LEX_T_SEMI; delim = AST_D_SEMI;
 			} else {
-				if (close_token != LEX_T_EOF) break;
+				// if (close_token != LEX_T_EOF) break;
 				parser_expected_after(parser, parser->previous, S("`,` or `;`"));
 				parser_skip(parser);
 			};
 		} else if (parser->peek.tag != delim_token) {
-			if (close_token != LEX_T_EOF) break;
+			Str const delim_str = delim == AST_D_COMMA ? S("`,`") : S("`;`");
+			parser_expected_after(parser, parser->previous, delim_str);
+			// if (close_token != LEX_T_EOF) break;
 			while (parser->peek.tag != delim_token) parser_skip(parser);
 		};
 
@@ -160,7 +162,8 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power) {
 			*caller_ptr = parser_expr(parser, PARSE_POWER_PREFIX_NEG);
 		} break;
 
-		case LEX_T_PLUS: case LEX_T_MINUS: case LEX_T_BANG: case LEX_T_DOT: {
+		case LEX_T_PLUS: case LEX_T_MINUS: case LEX_T_BANG: case LEX_T_DOT:
+		case LEX_T_OR_GT: {
 			u32 pos = parser->peek.pos; u16 len = parser->peek.len;
 
 			AstTag tag; ParsePower power; switch (parser->peek.tag) {
@@ -168,6 +171,7 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power) {
 				case LEX_T_MINUS: tag = AST_T_UNA_NEG; power = PARSE_POWER_PREFIX_NOT; break;
 				case LEX_T_BANG:  tag = AST_T_UNA_NOT; power = PARSE_POWER_PREFIX_NEG; break;
 				case LEX_T_DOT:   tag = AST_T_UNA_DOT; power = PARSE_POWER_PREFIX_DOT; break;
+				case LEX_T_OR_GT: tag = AST_T_UNA_DOT; power = PARSE_POWER_PREFIX_UNPOS; break;
 				default: PANIC("unhandled kind [parser->peek.tag]");
 			};
 

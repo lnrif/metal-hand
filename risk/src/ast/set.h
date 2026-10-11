@@ -2,7 +2,7 @@
 #define RK_AST_SET_H
 
 #include "risk/src/lex/core.h"
-#include "risk/src/ast/core.h"
+#include "risk/src/ast/ast.h"
 
 // |================================================================================================|
 // |> PARSER SETS                                                                                   |
@@ -13,6 +13,11 @@
 	X(MINUS, SUB) \
 	X(STAR, MUL) \
 	X(SLASH, DIV) \
+	\
+	X(PLUS_EQ, SET_ADD) \
+	X(MINUS_EQ, SET_SUB) \
+	X(STAR_EQ, SET_MUL) \
+	X(SLASH_EQ, SET_DIV) \
 	\
 	X(COLON, COLON) \
 	X(EQ, SET) \

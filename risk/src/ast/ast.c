@@ -1,4 +1,4 @@
-#include "risk/src/ast/core.h"
+#include "risk/src/ast/ast.h"
 #include "std/mem/bump.h"
 #include "std/mem/page.h"
 
@@ -7,7 +7,6 @@
 
 Str ast_name(AstTag tag) {
 	switch (tag) {
-
 		// case AST_T_ATOM_BEG:
 			case AST_T_POISON: return S("poison");
 			case AST_T_ATOM_IDENT: return S("ident");
@@ -22,6 +21,7 @@ Str ast_name(AstTag tag) {
 			case AST_T_UNA_DOT: return S(".a");
 			case AST_T_UNA_DEREF: return S("a.*");
 			case AST_T_UNA_REF: return S("a.&");
+			case AST_T_UNA_UNPOS: return S("|> a");
 		// case AST_T_UNA_END:
 
 		// case AST_T_BIN_BEG:
@@ -30,10 +30,10 @@ Str ast_name(AstTag tag) {
 			case AST_T_BIN_MUL: return S("a * b");
 			case AST_T_BIN_DIV: return S("a / b");
 
-			case AST_T_BIN_ADD_SET: return S("a += b");
-			case AST_T_BIN_SUB_SET: return S("a -= b");
-			case AST_T_BIN_MUL_SET: return S("a *= b");
-			case AST_T_BIN_DIV_SET: return S("a /= b");
+			case AST_T_BIN_SET_ADD: return S("a += b");
+			case AST_T_BIN_SET_SUB: return S("a -= b");
+			case AST_T_BIN_SET_MUL: return S("a *= b");
+			case AST_T_BIN_SET_DIV: return S("a /= b");
 
 			case AST_T_BIN_LT: return S("a < b");
 			case AST_T_BIN_LE: return S("a <= b");
@@ -77,7 +77,7 @@ Ast ast_init(Pages * nodes, Src src) {
 	return (Ast){.src = src, .nodes = bump_init(nodes), .root = AST_IDX_NIL};
 };
 
-void ast_free(Ast * ast) {
+void ast_free(Ast * ast) { UNUSED(ast);
 	// TODO: free
 };
 
