@@ -125,6 +125,8 @@ typedef enum: u8 {
 
 	// '||'
 	LEX_T_OR_OR,
+	// '|>'
+	LEX_T_OR_GT,
 	// '|'
 	LEX_T_OR,
 

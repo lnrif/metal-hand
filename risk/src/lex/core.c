@@ -53,6 +53,7 @@ Str lex_name(LexTag tag) {
 		case LEX_T_AND: return S("'&'");
 
 		case LEX_T_OR_OR: return S("'||'");
+		case LEX_T_OR_GT: return S("'|>'");
 		case LEX_T_OR: return S("'|'");
 
 		case LEX_T_CARET: return S("'^'");
@@ -339,6 +340,7 @@ LexToken lex_next(Lexer * lexer) {
 
 	if EAT('|') {
 		if EAT('|') FINISH(LEX_T_OR_OR);
+		if EAT('>') FINISH(LEX_T_OR_GT);
 		FINISH(LEX_T_OR);
 	};
 
