@@ -28,13 +28,15 @@ enum: u32 {
 	MIR_TY_UNSIGNED,
 	// []T, [:0]T, [N:0]T, [?:0]T,
 	MIR_TY_ARRAY,
-	// T^mut
+	// &T
 	MIR_TY_REF,
 	// struct { a: A, b: B, ... }
 	MIR_TY_STRUCT,
 	// enum { a, b, ... }
 	MIR_TY_ENUM,
-	#define MIR_TY_END (MIR_TY_ENUM + 1)
+	// type { ... }
+	MIR_TY_TYPE,
+	#define MIR_TY_END (MIR_TY_TYPE + 1)
 };
 
 typedef struct {} MirTyPoison;
@@ -43,10 +45,26 @@ typedef struct { u16 bits; } MirTyFloat;
 typedef struct { u16 bits; } MirTySigned;
 typedef struct { u16 bits; } MirTyUnsigned;
 
+typedef enum: u8 {
+	// [~]T
+	MIR_TY_ARR_K_DYN,
+	// [N]T
+	MIR_TY_ARR_K_KNOWN,
+	// [?]T
+	MIR_TY_ARR_K_UNKNOWN,
+} MirTyArrKind;
+
 typedef struct {
-	MirIndex count;
+	MirIndex count; MirTyArrKind kind;
 	MirTy ty;
-} MirTyArray;
+} MirTyArr;
+
+typedef struct {
+	union {
+		
+	};
+	MirTy ty;
+} MirTyItem;
 
 typedef enum: u8 {
 	MIR_TAG_POISON,

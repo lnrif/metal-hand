@@ -17,7 +17,7 @@ typedef struct {
 	Fmt * paths; ArgsCmdBuild args;
 } RkBuild;
 
-#define PARSER_ERROR_LIMIT 5
+#define PARSER_ERROR_LIMIT 20
 
 b8 rk_build(RkBuild build) {
 	u8 res = 0;
