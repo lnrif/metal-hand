@@ -62,12 +62,12 @@ next => proc { lexer: &Lexer'mut } -> { token: Token } :: {
 };
 
 
-lex => proc { src'mut: &[64]u8 } -> { kind: Kind } :: {
-	peek => proc { s := src } -> u8 :: src[0];
+lex => { src'mut: &[64]u8 } -> { kind: Kind } :: {
+	peek => { s := src } -> u8 :: src[0];
 
-	skip => proc {} -> u8 {
+	skip => {} -> u8 {
 		b := peek!;
-		if b != 0 then src = &src[1..];
+		if b != 0 do src = &src[1..];
 		ret b;
 	};
 
@@ -107,7 +107,7 @@ lex => proc { src'mut: &[64]u8 } -> { kind: Kind } :: {
 	ret .ill;
 };
 
-fun => proc { case: @expr } -> @code(:expand) :: {
+fun => { case: @expr } -> @code(:expand) :: {
 	if cond {
 		a do b,
 		case do c,

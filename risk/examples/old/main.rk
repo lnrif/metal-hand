@@ -26,14 +26,8 @@ scale-mut[0] *= 1.1;
 
 scale-mut.* *= 1.1;
 
-ws: f16[32][32].&'mut;
-
-ws: &'mut [32][32]f16;
+ws: &'mut [16][16] f16 = 10;
 
 Parser <| type {
 	expr => { parser: Parser.&'mut } :: {};
-
-
-
-	expr => { parser: &'mut Parser } :: {};
 };
