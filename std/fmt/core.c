@@ -600,24 +600,23 @@ b8 fmt_f64_ex(Fmt * out, f64 src, FmtNumStyle * style) {
 // |================================================================================================|
 
 b8 fmt_mem_ex(Fmt * out, u64 src, FmtNumStyle * style) {
-	f64 v; Str s; i8 prec = 1;
-	if (src >= GB(4)) {
-		v = (f64)src / GB(1); s = S("GiB");
+	f64 v; Str s; u8 prec = 1;
+	if (src >= GB(1) / 2) {
+		v = (f64)src / GB(1); s = S(" GB");
 		if (src % GB(1) == 0) prec = 0;
-	} else if (src >= MB(4)) {
-		v = (f64)src / MB(1); s = S("MiB");
+	} else if (src >= MB(1) / 2) {
+		v = (f64)src / MB(1); s = S(" MB");
 		if (src % MB(1) == 0) prec = 0;
-	} else if (src >= KB(4)) {
-		v = (f64)src / KB(1); s = S("KiB");
+	} else if (src >= KB(1) / 2) {
+		v = (f64)src / KB(1); s = S(" KB");
 		if (src % KB(1) == 0) prec = 0;
 	} else {
-		v = (f64)src; s = S("B"); prec = 0;
+		v = (f64)src; s = S(" B"); prec = 0;
 	};
 
 	Fmt fmt = FMT_ON_STACK(128, out->flow);
-	u32 width = style->width; style->width = 0;
-	UNUSED(prec); // TODO: add f64
-	fmt_u64_ex(&fmt, (u64)v, style);
+	u32 width = style->width; style->width = 0; style->digits = prec;
+	fmt_f64_ex(&fmt, v, style);
 	fmt_str_ex(&fmt, s, &(FmtStrStyle){0});
 
 	FmtStrStyle final = (FmtStrStyle){.width = width, .fill = ' '};
