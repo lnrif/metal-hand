@@ -26,7 +26,6 @@ typedef struct {
 		}; \
 	}
 
-
 // |================================================================================================|
 // |> [Reg]: helpers                                                                                |
 
@@ -65,7 +64,10 @@ typedef Reg (*RegApi)(RegCtx ctx, Reg reg, RegReq req);
 // |================================================================================================|
 // |> man                                                                                           |
 
-typedef struct { RegCtx ctx; RegApi api; } RegMan;
+typedef struct {
+	RegCtx ctx;
+	union { RegApi api; b64 is_valid; };
+} RegMan;
 
 #define REG_MAN(_ctx, _api) ((RegMan){.ctx = (_ctx), .api = (_api)})
 #define REG_MAN_NIL REG_MAN(0, 0)
@@ -82,11 +84,13 @@ RegUpd reg_upd_arr_ex(
 	RegDir dir
 );
 
-#define REG_UPD_ARR(ptr, len, new_len, dir) \
+#define REG_UPD_ARR_EX(T, ptr, len, new_len, dir) \
 	reg_upd_arr_ex( \
-		sizeof(*(ptr)), alignof(typeof(*(ptr))), \
+		sizeof(T), alignof(T), \
 		(ptr), (len), (new_len), (dir) \
 	)
+
+#define REG_UPD_ARR(ptr, len, new_len, dir) REG_UPD_ARR_EX(typeof(*(ptr)), ptr, len, new_len, dir)
 
 #define reg_upd_arr(man, ptr, len, new_len, dir) \
 	reg_upd(man, REG_UPD_ARR(ptr, len, new_len, dir))

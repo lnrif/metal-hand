@@ -1,15 +1,17 @@
 #include "risk/src/ast/fmt.h"
+#include "risk/src/ast/ast.h"
 #include "risk/src/ast/set.h"
 #include "risk/src/src/core.h"
+#include "std/core.h"
 #include "std/flow/core.h"
 #include "std/fmt/core.h"
 
-#define DEPTH_STEP 3
+#define DEPTH_STEP 2
 
 void ast_fmt_ex(
 	Fmt * fmt, Ast const * ast,
 	AstIdx idx, u16 depth,
-	u32 num, u8 width
+	u32 num, u8 width, b8 special_color
 );
 
 typedef enum: u8 {
@@ -62,10 +64,10 @@ void ast_fmt_seq(
 	);
 
 	FMT(fmt, FMT_LIT("\n"));
-	if (kind != AST_FMT_SEQ) ast_fmt_ex(fmt, ast, seq->idx[seq->count], depth + 1, 0, w);
+	if (kind != AST_FMT_SEQ) ast_fmt_ex(fmt, ast, seq->idx[seq->count], depth + 1, 0, w, true);
 
 	for (u32 i = 0; i < seq->count; i += 1) {
-		ast_fmt_ex(fmt, ast, seq->idx[i], depth + 1, i + (kind != AST_FMT_SEQ ? 1 : 0), w);
+		ast_fmt_ex(fmt, ast, seq->idx[i], depth + 1, i + (kind != AST_FMT_SEQ ? 1 : 0), w, false);
 	};
 
 	// FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
@@ -74,19 +76,21 @@ void ast_fmt_seq(
 void ast_fmt_ex(
 	Fmt * fmt, Ast const * ast,
 	AstIdx idx, u16 depth,
-	u32 num, u8 width
+	u32 num, u8 width, b8 special_color
 ) {
 	uptr const head = AST_IDX_AS_PTR(ast, idx);
 	AstTag const * tag = (void*)head;
 
 	FMT(fmt,
-		FMT_REPEAT(' ', DEPTH_STEP * depth), FMT_BLUE,
+		FMT_REPEAT(' ', DEPTH_STEP * depth), (special_color) ? FMT_YELLOW : FMT_BLUE,
 		FMT_LIT("["), FMT_U64(num, .digits = width), FMT_LIT("] ")
 	);
 
 	switch (*tag) {
 		case AST_T_POISON: {
-			FMT(fmt, FMT_RED, FMT_LIT("poison"), FMT_LIT("\n"));
+			AstAtom const * atom = (void*)head;
+			SrcDot dot = src_dot(ast->src.str, SRC_DOT_NIL, atom->pos);
+			FMT(fmt, FMT_RED, FMT_LIT("poison "), FMT_LOC_NO_ARROW(ast->src.path, dot.row, dot.col));
 		} break;
 
 		case AST_T_ATOM_IDENT:
@@ -114,8 +118,9 @@ void ast_fmt_ex(
 		case AST_T_UNA_NEG:
 		case AST_T_UNA_NOT:
 		case AST_T_UNA_DOT:
-		case AST_T_UNA_REF:
+		case AST_T_UNA_COLON:
 		case AST_T_UNA_DEREF:
+		case AST_T_UNA_REF:
 		case AST_T_UNA_UNPOS:
 		{
 			AstUna const * una = (void*)head;
@@ -127,7 +132,7 @@ void ast_fmt_ex(
 				FMT_LIT("\n"),
 			);
 
-			ast_fmt_ex(fmt, ast, una->node, depth + 1, 0, 1);
+			ast_fmt_ex(fmt, ast, una->node, depth + 1, 0, 1, false);
 			// FMT(fmt, FMT_REPEAT(' ', depth * DEPTH_STEP));
 			// FMT(fmt, FMT_GREY, FMT_LIT(")"), FMT_LIT("\n"));
 		} break;
@@ -166,8 +171,8 @@ void ast_fmt_ex(
 				FMT_LOC_NO_ARROW(ast->src.path, dot.row, dot.col),
 			);
 
-			ast_fmt_ex(fmt, ast, bin->lhs, depth + 1, 0, 1);
-			ast_fmt_ex(fmt, ast, bin->rhs, depth + 1, 1, 1);
+			ast_fmt_ex(fmt, ast, bin->lhs, depth + 1, 0, 1, false);
+			ast_fmt_ex(fmt, ast, bin->rhs, depth + 1, 1, 1, false);
 		} break;
 
 		case AST_T_SEQ:          ast_fmt_seq(fmt, ast, idx, depth, AST_FMT_SEQ); break;
@@ -268,7 +273,7 @@ void ast_fmt(Fmt * fmt, Ast const * ast, AstIdx idx) {
 		FMT_LIT("\n\n"),
 	);
 
-	ast_fmt_ex(fmt, ast, idx, 0, 0, 1);
+	ast_fmt_ex(fmt, ast, idx, 0, 0, 1, false);
 
 	FMT(fmt,
 		FMT_LIT("\n"),

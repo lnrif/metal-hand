@@ -1,7 +1,10 @@
+#include "std/core.h"
+#include "std/list/core.h"
 #include "std/mem/page.h"
 #include "std/fmt/core.h"
 #include "std/fs/core.h"
 
+#include "std/mem/slab.h"
 #include "std/proc/exit.h"
 #include "std/run/run.h"
 #include "std/run/arg.h"
@@ -19,6 +22,7 @@ typedef struct {
 
 #define PARSER_ERROR_LIMIT 20
 
+// write documenation
 b8 rk_build(RkBuild build) {
 	u8 res = 0;
 
@@ -97,6 +101,8 @@ b8 rk_build(RkBuild build) {
 			FMT_YELLOW, FMT_REPEAT('=', DELIM_SIZE * 2 + S(" LEX ").len),
 			FMT_LIT("\n\n"),
 		);
+
+		fmt_flush_stream(build.fmt, build.out);
 	};
 
 	Pages nodes_pages = pages_reserve(MB(256)); if (!nodes_pages.is_valid) {
@@ -116,7 +122,6 @@ b8 rk_build(RkBuild build) {
 		);
 		proc_exit(255);
 	};
-
 
 	Parser parser = parser_init(
 		(Src){.str = buf.str, .path = build_input.str},
@@ -202,6 +207,39 @@ void run(Run run) { UNUSED(run);
 
 	// |================================================================================================|
 	// |> hello                                                                                         |
+
+	// Pages tmp = pages_reserve(MB(2));
+	// if (!tmp.is_valid) proc_exit(69);
+	//
+	// typedef LIST_TYPE(u64) Numbers;
+	// Numbers ns = LIST_EMPTY(Numbers, pages_pinned(&tmp));
+	//
+	// list_push(&ns, 1, 2, 3);
+	// FMT(fmt, FMT_U64(ns.len), FMT_LIT("\n"));
+	//
+	// for (u64 i = 0; i < ns.len; i += 1) FMT(fmt,
+	// 	FMT_LIT("ns["), FMT_U64(i), FMT_LIT("] = "),
+	// 	FMT_U64(ns.ptr[i]),
+	// 	FMT_LIT("\n"),
+	// );
+	//
+	// list_pop(&ns);
+	//
+	// for (u64 i = 0; i < ns.len; i += 1) FMT(fmt,
+	// 	FMT_LIT("ns["), FMT_U64(i), FMT_LIT("] = "),
+	// 	FMT_U64(ns.ptr[i]),
+	// 	FMT_LIT("\n"),
+	// );
+
+	// typedef SLAB_TYPE(u64) Numbers;
+
+	// Numbers ns;
+	// if (!slab_init(&ns, U16_MAX)) proc_exit(69);
+
+	// u64 * x = slab_alloc(&ns);
+	// u64 * y = slab_alloc(&ns);
+	// u64 * z = slab_alloc(&ns);
+	// slab_free(&ns, x);
 
 	ArgsCmd cmd = {0}; {
 		Args args = arg_init(&run);

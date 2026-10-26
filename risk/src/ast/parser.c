@@ -24,7 +24,12 @@ void parser_skip(Parser * parser) {
 };
 
 void parser_skip_until_pivot(Parser * parser) {
-	while (!lex_is_pivot(parser->peek.tag)) parser_skip(parser);
+	b8 skipped = false;
+	while (!lex_is_pivot(parser->peek.tag)) {
+		parser_skip(parser);
+		skipped = true;
+	};
+	if (!skipped) parser_skip(parser);
 };
 
 // |================================================================================================|
@@ -75,6 +80,7 @@ inline AstIdx parser_sequence(Parser * parser, b8 file) {
 
 		AstIdx expr = parser_expr(parser, PARSE_POWER_NIL);
 		(void)bump_alloc(&parser->tmp, 1, expr); count += 1;
+		if (parser->peek.tag == close_token) break;
 
 		if (delim == AST_D_NONE) {
 			if (parser->peek.tag == LEX_T_COMMA) {
@@ -84,7 +90,7 @@ inline AstIdx parser_sequence(Parser * parser, b8 file) {
 			} else {
 				// if (close_token != LEX_T_EOF) break;
 				parser_expected_after(parser, parser->previous, S("`,` or `;`"));
-				parser_skip(parser);
+				parser_skip_until_pivot(parser);
 			};
 		} else if (parser->peek.tag != delim_token) {
 			Str const delim_str = delim == AST_D_COMMA ? S("`,`") : S("`;`");
@@ -147,6 +153,13 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power) {
 			parser_skip(parser);
 		} break;
 
+		// case LEX_T_STRING_UNTERMINATED: {
+		// 	AstAtom atom = (AstAtom){.tag = AST_T_ATOM_STRING, .pos = parser->peek.pos, .len = parser->peek.len};
+		// 	lhs = ast_alloc(&parser->ast, atom);
+		// 	parser_skip_until_pivot(parser);
+		// 	return lhs;
+		// } break;
+
 		case LEX_T_PAREN_OPEN:
 		case LEX_T_BRACE_OPEN:
 		case LEX_T_BRACKET_OPEN: {
@@ -162,16 +175,18 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power) {
 			*caller_ptr = parser_expr(parser, PARSE_POWER_PREFIX_NEG);
 		} break;
 
-		case LEX_T_PLUS: case LEX_T_MINUS: case LEX_T_BANG: case LEX_T_DOT:
+		case LEX_T_PLUS: case LEX_T_MINUS: case LEX_T_BANG:
+		case LEX_T_DOT: case LEX_T_COLON:
 		case LEX_T_OR_GT: {
 			u32 pos = parser->peek.pos; u16 len = parser->peek.len;
 
 			AstTag tag; ParsePower power; switch (parser->peek.tag) {
-				case LEX_T_PLUS:  tag = AST_T_UNA_POS; power = PARSE_POWER_PREFIX_POS; break;
-				case LEX_T_MINUS: tag = AST_T_UNA_NEG; power = PARSE_POWER_PREFIX_NOT; break;
-				case LEX_T_BANG:  tag = AST_T_UNA_NOT; power = PARSE_POWER_PREFIX_NEG; break;
-				case LEX_T_DOT:   tag = AST_T_UNA_DOT; power = PARSE_POWER_PREFIX_DOT; break;
-				case LEX_T_OR_GT: tag = AST_T_UNA_DOT; power = PARSE_POWER_PREFIX_UNPOS; break;
+				case LEX_T_PLUS:  tag = AST_T_UNA_POS;   power = PARSE_POWER_PREFIX_POS; break;
+				case LEX_T_MINUS: tag = AST_T_UNA_NEG;   power = PARSE_POWER_PREFIX_NOT; break;
+				case LEX_T_BANG:  tag = AST_T_UNA_NOT;   power = PARSE_POWER_PREFIX_NEG; break;
+				case LEX_T_DOT:   tag = AST_T_UNA_DOT;   power = PARSE_POWER_PREFIX_DOT; break;
+				case LEX_T_COLON: tag = AST_T_UNA_COLON; power = PARSE_POWER_PREFIX_COLON; break;
+				case LEX_T_OR_GT: tag = AST_T_UNA_DOT;   power = PARSE_POWER_PREFIX_UNPOS; break;
 				default: PANIC("unhandled kind [parser->peek.tag]");
 			};
 

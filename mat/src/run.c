@@ -3,28 +3,12 @@
 #include "std/proc/exit.h"
 #include "std/run/run.h"
 
-#include "std/rnd/core.h"
-
 #include "std/mem/page.h"
 #include "std/fmt/core.h"
 
-#include "mat/src/mat.h"
+#include "mat/src/ten.h"
 
-// b8 mat_alloc(Mat * mat, RegMan man, u32 row, u32 col) {
-//
-// };
-//
-// b8 lin_init(Lin * lin, RegMan man, Bind x, u32 out) {
-// 	u64 len = 0;
-// 	Reg reg = reg_upd_arr(man, (f32*)0, 0, len, REG_DIR_UP);
-// 	if (!reg.is_valid) return false;
-//
-// 	f32 * ptr = reg.any;
-//
-//
-//
-// 	return true;
-// };
+// #define MAT_ALLOC_OR_FAIL(mat, out, in, exit...)
 
 void run(Run run) { UNUSED(run);
 	// |================================================================================================|
@@ -61,65 +45,182 @@ void run(Run run) { UNUSED(run);
 	// |================================================================================================|
 	// |> ...                                                                                           |
 
+	u8 error_code = 0;
+
 	Pages mat_pages = pages_reserve(MB(16));
 	if (!mat_pages.is_valid) {
-		stream_write_lit(out,
-			ANSI_BOLD ANSI_RED "[fatal] "
-			ANSI_WHITE "failed to reserve pages for matrixes" "\n"
-			ANSI_RESET
+		FMT(fmt,
+			FMT_BOLD, FMT_RED, FMT_LIT("[fatal] "),
+			FMT_WHITE, FMT_LIT("failed to reserve pages for matrixes" "\n"),
+			FMT_RESET,
 		);
-		proc_exit(255);
+		error_code = 255;
+		goto exit;
 	};
 
-	// u8 const SEED = 0;
+	RegMan man = pages_pinned(&mat_pages);
+	// u32 _seed = (u32)rnd_seed(); u32 * seed = &_seed;
 
-	u8 const WEIGHT_PREC = 3;
-	u8 const PREC = 3;
-	u32 _seed = (u32)rnd_seed(); u32 * seed = &_seed;
+	Tensor x0 = {0};
+	if (!ten_init(&x0, TEN_DIMS(3), man)) { error_code = 69; goto exit; };
 
-	#define IN  3
-	#define OUT 3
+	Tensor w0 = {0};
+	if (!ten_init(&w0, TEN_DIMS(4, 3), man)) { error_code = 69; goto exit; };
 
-	// Col X = COL_ON_STACK(IN);  Col XG = COL_ON_STACK(IN);
-	// Col Y = COL_ON_STACK(OUT); Col YG = COL_ON_STACK(OUT);
+	Tensor b0 = {0};
+	if (!ten_init(&b0, TEN_DIMS(4), man)) { error_code = 69; goto exit; };
+
+	ten_fmt_dims(fmt, &x0, .name = S("X"));
+	ten_fmt(fmt, &x0, .prec = 3, .params = 32, .line = 0);
+
+	ten_fmt_dims(fmt, &w0, .name = S("W"));
+	ten_fmt(fmt, &w0, .prec = 3, .params = 32, .line = 0);
+
+	// change prec to 5
+	ten_fmt_dims(fmt, &b0, .name = S("B"));
+	ten_fmt(fmt, &b0, .prec = 3, .params = 32, .line = 0);
+
+	fmt_flush_stream(fmt, out);
+
+	// for (;;) {
+	// 	FMT(fmt, FMT_MAGENTA, FMT_LIT("\n"), FMT_REPEAT('-', 64), FMT_LIT("\n"));
+	// 	ten_fmt_dims(fmt, &w0, .name = S("W0"));
+	// 	ten_fmt(fmt, &w0, .prec = 1, .params = 64);
+	// 	fmt_flush_stream(fmt, out);
 	//
-	// Lin l0 = (Lin){
-	// 	.x = COL_ON_STACK(IN),      .xg = COL_ON_STACK(IN),
-	// 	.y = COL_ON_STACK(OUT),     .yg = COL_ON_STACK(OUT),
-	// 	.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
-	// 	.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
+	// 	if (w0.dimension == 0) break;
+	// 	Tensor t = {0}; TenSlice s = TEN_SLICE(DIM_INDEX(0));
+	// 	ten_slice(&w0, &t, &s);
+	// 	w0 = t;
+	// };
+
+	// Tensor b0 = {0};
+	// if (!ten_init(&b0, TEN_DIMS(1, 1), man)) { error_code = 69; goto exit; };
+	// ten_fmt_dims(fmt, &b0, .name = S("B0"));
+
+
+	// Tensor c; TenSlice cs = TEN_SLICE(DIM_SLICE(1, 2));
+	// if (!ten_slice(&a, &c, &cs)) { error_code = 69; goto exit; };
+	// ten_fmt_dims(fmt, &c, .name = S("C"));
+
+	// TenMeta meta = (TenMeta){.man = man, .learn = TEN_LEARN_YES, .step = 0.0001f};
+	// B1 y; Lin l0; Relu r1; Lin l2;
+	//
+	// if (!t1_alloc(&y.v, meta.man, IN)) {
+	// 	error_code = 69;
+	// 	goto exit;
 	// };
 	//
-	// Lin l1 = (Lin){
-	// 	.x = X, .xg = XG,
-	// 	.y = Y, .yg = YG,
-	// 	.w = MAT_ON_STACK(OUT, IN), .wg = MAT_ON_STACK(OUT, IN),
-	// 	.b = COL_ON_STACK(IN),      .bg = COL_ON_STACK(IN),
+	// if (!lin_init(&l0, y, 2, &meta)) {
+	// 	error_code = 69;
+	// 	goto exit;
 	// };
+	//
+	// if (!relu_init(&r1, l0.yb, 0.2f, &meta)) {
+	// 	error_code = 69;
+	// 	goto exit;
+	// };
+	//
+	// if (!lin_init(&l2, r1.yb, OUT, &meta)) {
+	// 	error_code = 69;
+	// 	goto exit;
+	// };
+	//
+	// T1 xs[10]; T1 ys[LEN(xs)];
+	// for (u32 i = 0; i < LEN(xs); i += 1) {
+	// 	if (!t1_alloc(&xs[i], meta.man, IN)) {
+	// 		error_code = 69;
+	// 		goto exit;
+	// 	};
+	//
+	// 	if (!t1_alloc(&ys[i], meta.man, OUT)) {
+	// 		error_code = 69;
+	// 		goto exit;
+	// 	};
+	//
+	// 	f32 const a = (f32)(i + 1);
+	//
+	// 	xs[i].ptr[0] = a / (f32)LEN(xs);
+	// 	ys[i].ptr[0] = (a + 1.0f) / (f32)(LEN(xs) + 1);
+	// };
+	//
+	// lin_rnd(&l0, seed); lin_rnd(&l2, seed);
+	//
+	// FMT(fmt, FMT_REPEAT('=', 64), FMT_LIT("\n"));
+	// lin_fmt(fmt, &l0);
+	// FMT(fmt, FMT_REPEAT('.', 64), FMT_LIT("\n"));
+	// lin_fmt(fmt, &l2);
+	// FMT(fmt, FMT_LIT("\n"));
+	//
+	// f32 cost = 10000.0f;
+	// for (u32 i = 0; i < 10000000 && f32_abs(cost) > 0.0000001; i += 1) {
+	// 	cost = 0.0f;
+	// 	for (u32 j = 0; j < LEN(xs); j += 1) {
+	// 		l0.x = xs[j];
+	// 		// t1_fmt(fmt, l0.x);
+	//
+	// 		lin_eval(&l0);
+	// 		relu_eval(&r1);
+	// 		lin_eval(&l2);
+	//
+	// 		for (u32 k = 0; k < l2.y.len; k += 1) {
+	// 			f32 const g = l2.y.ptr[k] - ys[j].ptr[k];
+	// 			l2.yg.ptr[k] = g;
+	// 			cost += f32_abs(g);
+	// 		};
+	//
+	// 		// t1_fmt(fmt, xs[j], .name = S("X"));
+	// 		// t1_fmt(fmt, ys[j], .name = S("Y"));
+	// 		// t1_fmt(fmt, l2.y,  .name = S("O"));
+	//
+	// 		lin_back(&l2);
+	// 		relu_back(&r1);
+	// 		lin_back(&l0);
+	//
+	// 		// lin_learn(&l0); lin_learn(&l2);
+	// 	};
+	//
+	// 	if (i % 500000 == 0) {
+	// 		FMT(fmt,
+	// 			FMT_BLUE,
+	// 			FMT_LIT("["), FMT_U64(i, .digits = 4), FMT_LIT("] "),
+	// 			FMT_YELLOW,
+	// 			FMT_LIT("cost: "),
+	// 			FMT_ORANGE,
+	// 			FMT_F64(cost, .prec = 3),
+	// 			FMT_LIT("\n"),
+	// 			FMT_RESET,
+	// 		);
+	// 		FMT(fmt, FMT_REPEAT('=', 64), FMT_LIT("\n"));
+	// 		lin_fmt(fmt, &l0);
+	// 		FMT(fmt, FMT_REPEAT('.', 64), FMT_LIT("\n"));
+	// 		lin_fmt(fmt, &l2);
+	// 		FMT(fmt, FMT_LIT("\n"));
+	// 		fmt_flush_stream(fmt, out);
+	// 	};
+	//
+	// 	lin_learn(&l0); lin_learn(&l2);
+	// };
+	//
+	// FMT(fmt, FMT_REPEAT('=', 64), FMT_LIT("\n"));
+	// lin_fmt(fmt, &l0);
+	// FMT(fmt, FMT_REPEAT('.', 64), FMT_LIT("\n"));
+	// lin_fmt(fmt, &l2);
+	//
+	// FMT(fmt,
+	// 	FMT_YELLOW,
+	// 	FMT_LIT("cost: "),
+	// 	FMT_ORANGE,
+	// 	FMT_F64(cost, .prec = 3),
+	// 	FMT_LIT("\n"),
+	// 	FMT_RESET,
+	// );
+	//
+	// FMT(fmt, FMT_REPEAT('=', 64), FMT_LIT("\n"));
+	// lin_fmt(fmt, &ll);
 
-	Mat W = MAT_ON_STACK(OUT, IN); mat_rnd(W, seed);
-	mat_fmt(fmt, W, .prec = WEIGHT_PREC, .name = S("W"));
-
-	Col X = COL_ON_STACK(IN); col_rnd(X, seed);
-	mat_fmt(fmt, MAT_FROM_COL(X), .prec = PREC, .name = S("X"));
-
-	Col B = COL_ON_STACK(OUT); col_rnd(B, seed);
-	mat_fmt(fmt, MAT_FROM_COL(B), .prec = PREC, .name = S("B"));
-
-	Col Y = COL_ON_STACK(OUT);
-	mat_fma_col(Y, W, X, B);
-	mat_fmt(fmt, MAT_FROM_COL(Y), .prec = PREC, .name = S("Y"));
-
-// ok:
-
-	// Fmt tmp = FMT_ON_STACK(KB(4), FMT_SET_TEXT | FMT_SET_COLOR);
-	// FMT(&tmp, FMT_STR(fmt_as_str(fmt), .opt = FMT_S_ESCAPE | FMT_S_QUOTES), FMT_LIT("\n"));
-	// fmt_flush_stream(&tmp, out);
+exit:
 	fmt_flush_stream(fmt, out);
-	proc_exit(0);
-
-// err:
-	fmt_flush_stream(fmt, out);
-	proc_exit(1);
+	proc_exit(error_code);
 };
 

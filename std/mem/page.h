@@ -23,6 +23,17 @@ typedef struct { // TODO: add 2 direction to grow
 	CUR_EMBED(cur, pos, end);
 } Pages;
 
+STATIC_ASSERT(sizeof(Pages) == 24);
+
+#define PAGES_EMBED(pages, is_valid, beg, cur, pos, end) \
+	union { \
+		Pages pages; \
+		struct { \
+			union { uptr beg; b64 is_valid; }; \
+			CUR_EMBED(cur, pos, end); \
+		}; \
+	}
+
 #define PAGES_RAW(_beg, _pos, _end) ((Pages){.beg = (_beg), .pos = (_pos), .end = (_end)})
 #define PAGES_NIL PAGES_RAW(0, 0, 0)
 

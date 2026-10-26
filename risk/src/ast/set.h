@@ -53,6 +53,7 @@
 	\
 	X(SEMI) \
 	X(COLON) \
+	X(EOF) \
 
 // #define X(TOKEN)
 #define LEX_EXPR(X) \

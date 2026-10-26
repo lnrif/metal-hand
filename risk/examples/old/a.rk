@@ -1,22 +1,26 @@
-add := proc { a, b: f32 } -> f32 :: a + b;
+add := proc :: { a, b: f32 } -> f32 => a + b;
 
-add := proc {
-	a: f32;
-	b: f32;
+add := proc <| {
+	a: f32,
+	b: f32,
 } -> {
-	c: f32;
+	c: f32,
 } :: {
 	c <- a + b;
 	ret c;
 };
 
-add := proc { a, b, ret c: f32 } :: a + b;
+Abi := proc(:abi = .c, :align = 64);
 
-add := proc {
-	a, b: f32;
-	ret c: f32;
-} :: {
-	c <- a + b;
+type() <| {};
+proc() <| () -> ();
+
+Fn := Abi <| (a: f32, b: f32, c: f32) -> (d: f32);
+
+add := @as(Fn, (a, b, c) => a + b - c);
+
+add := proc :: (a | b: f32) -> (c: f32) => {
+	c := a + b;
 	ret c;
 };
 

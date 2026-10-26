@@ -30,6 +30,8 @@ typedef enum: u8 {
 		AST_T_UNA_NOT,
 		// .a
 		AST_T_UNA_DOT,
+		// :a
+		AST_T_UNA_COLON,
 		// a.*
 		AST_T_UNA_DEREF,
 		// a.&

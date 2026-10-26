@@ -19,6 +19,7 @@ Str ast_name(AstTag tag) {
 			case AST_T_UNA_NEG: return S("-a");
 			case AST_T_UNA_NOT: return S("!a");
 			case AST_T_UNA_DOT: return S(".a");
+			case AST_T_UNA_COLON: return S(":a");
 			case AST_T_UNA_DEREF: return S("a.*");
 			case AST_T_UNA_REF: return S("a.&");
 			case AST_T_UNA_UNPOS: return S("|> a");

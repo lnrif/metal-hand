@@ -46,8 +46,6 @@ typedef enum: u8 {
 	PARSE_POWER_RHS(SET),
 		// a := b := c; a := (b := c)
 		PARSE_POWER_INFIX_AS(SET, DEF),
-		// a => b => c; a => (b => c)
-		PARSE_POWER_INFIX_AS(SET, IMPLIES),
 		// a += b += c; a += (b += c)
 		PARSE_POWER_INFIX_AS(SET, SET_ADD),
 		// a -= b -= c; a -= (b -= c)
@@ -61,6 +59,8 @@ typedef enum: u8 {
 	PARSE_POWER_RHS(APPLY),
 	// a :: b :: c; a :: (b :: c)
 	PARSE_POWER_RHS(EXTEND),
+	// a => b => c; a => (b => c)
+	PARSE_POWER_INFIX_AS(EXTEND, IMPLIES),
 	// a : b : c; a : (b : c)
 	PARSE_POWER_RHS(COLON),
 
@@ -126,6 +126,8 @@ typedef enum: u8 {
 	PARSE_POWER_PREFIX_NOT = PARSE_POWER_PREFIX_POS,
 	// .a
 	PARSE_POWER_PREFIX_DOT = PARSE_POWER_PREFIX_POS,
+	// :a
+	PARSE_POWER_PREFIX_COLON = PARSE_POWER_PREFIX_POS,
 
 	// x * f()  => x * (f())
 	PARSE_POWER_CALL_PARENS,

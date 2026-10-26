@@ -12,7 +12,7 @@ Str lex_name(LexTag tag) {
 		case LEX_T_NUMBER: return S("number");
 
 		case LEX_T_STRING: return S("string");
-		case LEX_T_STRING_UNTERMINATED: return S("string");
+		case LEX_T_STRING_UNTERMINATED: return S("string-error");
 
 		case LEX_T_STRING_LINE: return S("string-line");
 
@@ -290,7 +290,7 @@ LexToken lex_next(Lexer * lexer) {
 
 	// one line string
 	if (P1 == '"') for (;;) { AT += 1;
-		if (P1 == '\\' && P2 == '"') AT += 2;
+		if (P1 == '\\' && P2 != '\0') AT += 2;
 		if (P1 == '\0' || P1 == '\n') FINISH(LEX_T_STRING_UNTERMINATED);
 		if (EAT('"'))                 FINISH(LEX_T_STRING);
 	};

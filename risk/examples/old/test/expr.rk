@@ -1,20 +1,20 @@
-Atom => enum {
-	tree { t: Tree },
-	token { t: Token },
+Atom := enum {
+	Tree { t: Tree },
+	Token { t: Token },
 };
 
-Tree => struct {
+Tree := struct {
 	len: u32,
 	tag: Tree.Tag,
 };
 
-Block => struct { ptr: uptr, len: usz };
+Block := struct(:abi = .c) { ptr: uptr, len: usz };
 
-reserve => proc { len: u64 } -> Block :: {};
+reserve := (len: u64) -> Block => @todo();
 
-Tree <| {
+Tree <| module {
 	# Tag => enum { :Tag = u8; ... };
-	Tag => enum(:tag = u8) {
+	Tag := enum(:Tag = u8) {
 		# '(...)'
 		paren,
 		# '{...}'
@@ -24,13 +24,17 @@ Tree <| {
 	};
 };
 
-Token => struct {
+Token := struct(:align = u64.@align) {
 	pos: u32,
 	len: u24,
 	tag: Token.Tag,
 };
 
-Token <| {
+
+# @assert(:comptime, Token.@layout == u64.@layout, "...");
+@assert(:comptime, Token.@size == u64.@size && Token.@align == u64.@align, "...");
+
+Token <| module {
 	Tag => enum(
 		:Tag = u8,
 	) {
@@ -44,3 +48,15 @@ Token <| {
 	};
 };
 
+f := (a: f64) -> (b: f64) => 2.0 * a;
+
+g := (x: u32) -> u32 => f'{
+	y := _'{ ret'_ x; };
+	ret'f y;
+};
+
+std := @load("std.rk", :ty = .risk); # ty: enum { risk, bytes } = .risk;
+
+main := () => {
+	std.print("Hello, World!");
+};
