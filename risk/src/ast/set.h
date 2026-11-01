@@ -60,6 +60,7 @@
 	X(IDENT) \
 	X(NUMBER) \
 	X(STRING) \
+	X(STRING_UNTERMINATED) \
 	\
 	X(PLUS) \
 	X(MINUS) \

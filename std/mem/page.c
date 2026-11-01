@@ -59,11 +59,11 @@ Pages pages_reserve(u64 min_len) {
 	return PAGES_RAW(ptr, ptr, ptr + len);
 };
 
-void pages_release(Pages * pages) {
+b8 pages_release(Pages * pages) {
 	#if LINUX
 		iptr const res = linux_munmap(pages->beg, pages->end - pages->beg);
 		*pages = (Pages){0};
-		if (res < 0) return;
+		return res >= 0;
 	#elif WINDOWS
 		VirtualFree((void*)pages.beg, 0, WINDOWS_MEM_RELEASE);
 		#error "TODO: windows"

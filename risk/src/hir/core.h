@@ -2,7 +2,7 @@
 #define RK_HIR_CORE_H
 
 #include "risk/src/ast/ast.h"
-#include "std/list/core.h"
+#include "std/mem/list.h"
 
 // |================================================================================================|
 // |> HIR INDEX                                                                                     |
@@ -177,28 +177,28 @@ typedef struct {
 //
 // } HirNodeNum;
 
-typedef enum: u8 {
-	HIR_TY_TAG_,
-} HirTyTag;
-
-typedef struct {
-	union {
-		
-	};
-
-	HirTyTag tag;
-} HirTy;
-
+// typedef enum: u8 {
+// 	HIR_TY_TAG_,
+// } HirTyTag;
+//
+// typedef struct {
+// 	union {
+//
+// 	};
+//
+// 	HirTyTag tag;
+// } HirTy;
+//
 // |================================================================================================|
 // |> HIR IMPL                                                                                      |
 
-typedef LIST(HirTy) HirTyList;
-
-typedef struct {
-	HirTyList types;
-} HirState;
-
-void hir_from_ast(Ast ast) {
-	
-};
+// typedef LIST(HirTy) HirTyList;
+//
+// typedef struct {
+// 	HirTyList types;
+// } HirState;
+//
+// void hir_from_ast(Ast ast) {
+//
+// };
 #endif // RK_HIR_CORE_H

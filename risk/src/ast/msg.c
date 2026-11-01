@@ -66,11 +66,26 @@ void parser_expected_after_ex(FlowLoc loc, Parser * parser, LexToken token, Str 
 		FMT_WHITE, FMT_LIT("expected "), FMT_GREEN, FMT_STR(expected),
 		FMT_WHITE, FMT_LIT(" after token "),
 		FMT_RED, FMT_LIT("`"), FMT_STR(lexeme), FMT_LIT("`"), FMT_LIT("\n"),
-		FMT_RED, FMT_LIT("  | "), FMT_LOC(parser->ast.src.path, dot.row, dot.col),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC(parser->ast.src.path, dot.row, dot.col + 1),
 		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(loc),
 		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
 		FMT_LIT("\n"),
 	);
 };
 
+void parser_unterminated_string_ex(FlowLoc loc, Parser * parser, LexToken token) {
+	if (!parser_error_try_accept(parser)) return;
+
+	SrcDot const dot = src_dot(parser->ast.src.str, SRC_DOT_NIL, token.pos + token.len);
+	// Str const lexeme = STR(&parser->ast.src.raw[token.pos], token.len);
+
+	FMT(parser->fmt,
+		FMT_BOLD, FMT_RED, FMT_LIT("[E] "),
+		FMT_WHITE, FMT_LIT("unterminated string"), FMT_LIT("\n"),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC(parser->ast.src.path, dot.row, dot.col),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(loc),
+		FMT_RED, FMT_LIT("  | "), FMT_LOC_DEBUG(FLOW_LOC),
+		FMT_LIT("\n"),
+	);
+};
 

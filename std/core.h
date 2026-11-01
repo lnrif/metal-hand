@@ -160,6 +160,7 @@ STATIC_ASSERT(sizeof(iptr) == sizeof(void*));
 
 #define ALLOCA(len...) ((void*)__builtin_alloca(len))
 #define CTZ(n...) (u64)(__builtin_ctzll(n))
+#define CLZ(n...) (u64)(__builtin_clzll(n))
 #define ADD_OVER(a, b, r) __builtin_add_overflow(a, b, r)
 #define SUB_OVER(a, b, r) __builtin_sub_overflow(a, b, r)
 #define MUL_OVER(a, b, r) __builtin_mul_overflow(a, b, r)

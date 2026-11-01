@@ -56,6 +56,32 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power);
 // |================================================================================================|
 // |> PARSER EXPR                                                                                   |
 
+AstIdx parser_sequence_mismatched_delim(Parser * parser, LexTag delim_token) {
+	Str delim_str;
+
+	switch (delim_token) {
+		case LEX_T_COMMA: delim_str = S("`,`"); break;
+		case LEX_T_SEMI:  delim_str = S("`;`"); break;
+		default: delim_str = S("`,` or `;`"); break;
+	};
+
+	parser_expected_after(parser, parser->previous, delim_str);
+
+	LexToken const token = parser->peek;
+
+	while (
+		parser->peek.tag != LEX_T_COMMA &&
+		parser->peek.tag != LEX_T_SEMI &&
+		parser->peek.tag != LEX_T_BRACE_CLOSE &&
+		parser->peek.tag != LEX_T_BRACKET_CLOSE &&
+		parser->peek.tag != LEX_T_PAREN_CLOSE &&
+		parser->peek.tag != LEX_T_EOF
+	) parser_skip(parser);
+
+	AstAtom poison = (AstAtom){.tag = AST_T_POISON, .pos = token.pos, .len = token.len};
+	return ast_alloc(&parser->ast, poison);
+};
+
 inline AstIdx parser_sequence(Parser * parser, b8 file) {
 	u32 pos_open = parser->peek.pos;
 	LexTag close_token; AstBound bound;
@@ -71,16 +97,16 @@ inline AstIdx parser_sequence(Parser * parser, b8 file) {
 
 	if (close_token != LEX_T_EOF) parser_skip(parser);
 
-	LexTag delim_token; AstDelim delim = AST_D_NONE;
+	LexTag delim_token = LEX_T_EOF; AstDelim delim = AST_D_NONE;
 
 	u32 count = 0;
 	for (;;) {
-		if (parser->peek.tag == close_token) break;
+		if (parser->peek.tag == LEX_T_EOF || parser->peek.tag == close_token) break;
 		if (!parser_error_can_accept(parser)) break;
 
 		AstIdx expr = parser_expr(parser, PARSE_POWER_NIL);
 		(void)bump_alloc(&parser->tmp, 1, expr); count += 1;
-		if (parser->peek.tag == close_token) break;
+		if (parser->peek.tag == LEX_T_EOF || parser->peek.tag == close_token) break;
 
 		if (delim == AST_D_NONE) {
 			if (parser->peek.tag == LEX_T_COMMA) {
@@ -88,15 +114,16 @@ inline AstIdx parser_sequence(Parser * parser, b8 file) {
 			} else if (parser->peek.tag == LEX_T_SEMI)  {
 				delim_token = LEX_T_SEMI; delim = AST_D_SEMI;
 			} else {
-				// if (close_token != LEX_T_EOF) break;
-				parser_expected_after(parser, parser->previous, S("`,` or `;`"));
-				parser_skip_until_pivot(parser);
+				expr = parser_sequence_mismatched_delim(parser, delim_token);
+				(void)bump_alloc(&parser->tmp, 1, expr); count += 1;
 			};
-		} else if (parser->peek.tag != delim_token) {
-			Str const delim_str = delim == AST_D_COMMA ? S("`,`") : S("`;`");
-			parser_expected_after(parser, parser->previous, delim_str);
-			// if (close_token != LEX_T_EOF) break;
-			while (parser->peek.tag != delim_token) parser_skip(parser);
+		} else if (
+			parser->peek.tag != delim_token &&
+			parser->peek.tag != LEX_T_COMMA &&
+			parser->peek.tag != LEX_T_SEMI
+		) {
+			expr = parser_sequence_mismatched_delim(parser, delim_token);
+			(void)bump_alloc(&parser->tmp, 1, expr); count += 1;
 		};
 
 		parser_skip(parser);
@@ -153,12 +180,13 @@ AstIdx parser_expr(Parser * parser, ParsePower min_power) {
 			parser_skip(parser);
 		} break;
 
-		// case LEX_T_STRING_UNTERMINATED: {
-		// 	AstAtom atom = (AstAtom){.tag = AST_T_ATOM_STRING, .pos = parser->peek.pos, .len = parser->peek.len};
-		// 	lhs = ast_alloc(&parser->ast, atom);
-		// 	parser_skip_until_pivot(parser);
-		// 	return lhs;
-		// } break;
+		case LEX_T_STRING_UNTERMINATED: {
+			AstAtom atom = (AstAtom){.tag = AST_T_ATOM_STRING, .pos = parser->peek.pos, .len = parser->peek.len};
+			lhs = ast_alloc(&parser->ast, atom);
+			parser_unterminated_string(parser, parser->peek);
+			parser_skip_until_pivot(parser);
+			return lhs;
+		} break;
 
 		case LEX_T_PAREN_OPEN:
 		case LEX_T_BRACE_OPEN:

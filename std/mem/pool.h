@@ -49,13 +49,14 @@ PoolId       pool_gen_id (PoolGen const * gen, void const * ptr, PoolItem item);
 		PoolGen as_gen; \
 		struct { \
 			PAGES_EMBED(ps, is_valid, beg, cur, pos, end); \
-			T * free; \
+			union { T * free; T const * free_const; }; \
 			T * null; \
 		}; \
 	}
 
 #define pool_type(__pool__)     typeof(*(__pool__)->free)
 #define pool_type_mut(__pool__) typeof( (__pool__)->free)
+#define pool_type_ref(__pool__) typeof( (__pool__)->free_const)
 
 #define pool_item(__pool__) pool_item_init(sizeof(pool_type(__pool__)))
 #define pool_gen(__pool__) (&(__pool__)->as_gen)
@@ -67,8 +68,8 @@ PoolId       pool_gen_id (PoolGen const * gen, void const * ptr, PoolItem item);
 #define pool_free(__pool__, __ptr__) pool_gen_free(pool_gen(__pool__), (__ptr__), pool_item(__pool__))
 #define pool_reset(__pool__) pool_gen_reset((__pool__), pool_item(__pool__))
 
-#define pool_mut(__pool__, __id__) ((pool_type(__pool__))pool_gen_mut((__pool__), (__id__), pool_item(__pool__)))
-#define pool_ref(__pool__, __id__) ((pool_type(__pool__))pool_gen_ref((__pool__), (__id__), pool_item(__pool__)))
+#define pool_mut(__pool__, __id__) ((pool_type_mut(__pool__))pool_gen_mut(pool_gen(__pool__), (__id__), pool_item(__pool__)))
+#define pool_ref(__pool__, __id__) ((pool_type_ref(__pool__))pool_gen_ref(pool_gen(__pool__), (__id__), pool_item(__pool__)))
 #define pool_id(__pool__, __ptr__) pool_gen_id(pool_gen(__pool__), (__ptr__), pool_item(__pool__))
 
 #endif // !STD_MEM_POOL_H

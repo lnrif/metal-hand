@@ -1,10 +1,11 @@
 #include "std/core.h"
-#include "std/list/core.h"
+// #include "std/mem/list.h"
+#include "std/mem/heap.h"
 #include "std/mem/page.h"
 #include "std/fmt/core.h"
 #include "std/fs/core.h"
 
-#include "std/mem/slab.h"
+// #include "std/mem/slab.h"
 #include "std/proc/exit.h"
 #include "std/run/run.h"
 #include "std/run/arg.h"
@@ -130,7 +131,6 @@ b8 rk_build(RkBuild build) {
 	);
 
 	Ast ast = parser_parse(&parser);
-
 	if (build.args.ast) ast_fmt(build.fmt, &ast, ast.root);
 
 	FMT(build.fmt,

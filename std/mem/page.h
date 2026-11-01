@@ -41,7 +41,7 @@ STATIC_ASSERT(sizeof(Pages) == 24);
 // |> PAGES RESERVE/RELEASE                                                                         |
 
 Pages pages_reserve(u64 min_len);
-void  pages_release(Pages * pages);
+b8    pages_release(Pages * pages);
 
 // |================================================================================================|
 // |> PAGES ALLOC                                                                                   |
