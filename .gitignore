@@ -1,1 +1,2 @@
-echo "*" > .git-store/.gitignore
+risk/.build/
+mat/.build/
